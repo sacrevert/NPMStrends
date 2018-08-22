@@ -13,6 +13,7 @@ load(file = "data/npms1518_SamplesSpecies_17Aug2018.Rdata") # sample/species dat
 # file has one row for every species::fine-scale habitat association
 # broad habitat lists can be derived from another column indicating fine::broad habitat associations
 inds <- read.csv(file = "data/npmsIndicatorsIndicia_Aug2018.csv", header = T, stringsAsFactors = F)
+domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors = F)
 ## NOTE THAT THIS FILE MIGHT NEED TO BE OCCASIONALLY UPDATED SO THAT IT IS IN LINE WITH THE PREFERRED TAXON ACCORDING TO THE TAXA TABLE IN INDICIA! ##
 # UNFORTUNATELY THIS IS CURRENTLY A MANUAL TASK, BECAUSE THE HABITAT:SPECIES INFORMATION FOR WILDFLOWER/INDICATOR SPECIES IS NOT CONTAINED IN THE DATABASE ##
 # working is here: W:\PYWELL_SHARED\Pywell Projects\BRC\_BRC_projects\NPMS\Technical work\Species
@@ -56,8 +57,8 @@ getSamples <- function(habsList){ temp <- merge(npms15_18spp, npms15_18, by.x = 
 # END function
 
 ## Grasslands examples
-grasslands <- c("Neutral pastures and meadows", "Dry acid grassland", "Dry calcareous grassland", "Neutral damp grassland", "Lowland grassland")
-grassSamples <- getSamples(habsList = grasslands)
+#grasslands <- c("Neutral pastures and meadows", "Dry acid grassland", "Dry calcareous grassland", "Neutral damp grassland", "Lowland grassland")
+#grassSamples <- getSamples(habsList = grasslands)
 #
 
 ## Then process the filtered data so that species abundance information is as it should be (i.e. present/absent/NA)
@@ -97,8 +98,13 @@ spSamplePA <- function(samples, species){ temp <- aggregate(preferred_taxon ~ sa
                                           # but inventory samples should always be zero if absent
                                           absSamps_AN$preferred_taxon <- ifelse(absSamps_AN$title =="Inventory survey", 0, absSamps_AN$preferred_taxon)
                                           samples_PAN <- rbind(presSamps_AN, absSamps_AN) # combine so we have a PAN (pres, abs, NA) view on our focal species
+                                          names(samples_PAN)[3] <- "PAN" # rename to avoid confusion
+                                          # add in domins and dates etc. from original sample/species data
+                                          samples_PAN <- merge(samples_PAN, npms15_18spp[npms15_18spp$preferred_taxon == species,], by.x = "sample_id", by.y = "sample_id", all.x = T, all.y = F)
+                                          samples_PAN$domin <- ifelse(samples_PAN$PAN == 0, 0, samples_PAN$domin)
+                                          samples_PAN <- merge(samples_PAN, domins, by.x = "domin", by.y = "dominOrig", all.x = T, all.y = F)
                                           return(samples_PAN)
 }
 
 ## Let's see if it works!
-Achi_mill_PAN <- spSamplePA(samples = grassSamples, species = "Achillea millefolium") # should give 2003 obs of 9 vars -- tick!
+#Achi_mill_PAN <- spSamplePA(samples = grassSamples, species = "Achillea millefolium") # Seems good
