@@ -13,4 +13,4 @@ grassSamples <- getSamples(habsList = grasslands)
 
 ## Get and process data for species Y
 Achi_mill_PAN <- spSamplePA(samples = grassSamples, species = "Achillea millefolium")
-head(Achi_mill_PAN)
+head(Achi_mill_PAN); tail(Achi_mill_PAN)
