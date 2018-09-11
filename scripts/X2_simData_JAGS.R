@@ -41,8 +41,8 @@ for(k in 1:yr){
     for(j in 1:J){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
                                  rbinom(1, 1, 
-                                        plogis(gamma0 + y.array[i, j, k])), # detection function 1
-                                        #plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
+                                        #plogis(gamma0 + y.array[i, j, k])), # detection function 1
+                                        plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
                                  0)
     }
   }
@@ -58,6 +58,9 @@ Y <- yr # total number of years of monitoring covered by the data
 cpos <- as.vector(y.array)[which(as.vector(y.array) > 0)] # cover value for every positive cover
 # indicator linking positive plot k to the visit in the total visit list; length = n.Plot.pos
 plotInd <- apply(y.array, MARGIN=c(1,3), sum) # sum across visits and years within a plot (margin 1 = plot, margin 3 = year), visit information is summed
+#############
+### The following sections need generalising! Even just in the contxt of the sims here
+#############
 plot <- c(which(as.vector(plotInd[,1]) > 0), which(as.vector(plotInd[,2]) > 0), which(as.vector(plotInd[,3]) > 0)) # need plot indices within years
 n.Plot.pos <- length(plot)
 # indicator linking positive plot k to the year of the its visit in the total visit list; length = n.Plot.pos
