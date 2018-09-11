@@ -14,10 +14,6 @@ ilt<-function(x){ # inverse logit function
 logit <- function(x){ # logit function
   log(x/(1 - x))
 }
-is.zero <- function(x){
-  if(x == 0
-}
-
 ######################################
 
 ######################################
@@ -38,7 +34,6 @@ for(k in 1:yr){
       y.array[,,k] <- matrix(rbinom(N*J, 1, psi)*rbeta(N*J, mu*phi, (1-mu)*phi), 
                                  nrow=N, ncol=J)
 }
-
 # make a detection history matrix based on cover data
 x.array <- array(dim = c(N, J, yr))
 for(k in 1:yr){
@@ -46,7 +41,8 @@ for(k in 1:yr){
     for(j in 1:J){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
                                  rbinom(1, 1, 
-                                        plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function
+                                        plogis(gamma0 + y.array[i, j, k])), # detection function 1
+                                        #plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
                                  0)
     }
   }

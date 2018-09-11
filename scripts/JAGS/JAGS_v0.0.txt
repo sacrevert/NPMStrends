@@ -24,7 +24,7 @@ for(k in 1:n.Plot.pos){
 for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
-    p.dec[a] <- min(max(0.00001, p.Dec[a]), 0.99999) # trick to stop numerical problems (note that this will influence covars in detectability regression) -- important?
+    p.dec[a] <- min(max(0.00001, p.Dec[a]), 0.99999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
     logit(p.Dec[a]) <- gamma0 ## + covars on detectability
   }
 
