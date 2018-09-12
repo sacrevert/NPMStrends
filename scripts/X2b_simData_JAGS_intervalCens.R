@@ -60,19 +60,19 @@ cpos[,1] <- as.vector(y.array)[which(as.vector(y.array) > 0)] # actual cover val
 cpos[,2] <- 1 # indicator stating the observation censored
 cpos[,3] <- NA # NA values for latent variable
 # code borrowed from Pescott et al. 2016 Power paper:
-t <- c(1e-4,0.05,
+t <- c(1e-16,0.05,
        0.05,0.25,
        0.25,0.5,
        0.5,0.75,
        0.75,0.95,
-       0.95,0.9999)
+       0.95,0.9999999999999999)
 t = matrix(t, nrow = 6, ncol = 2, byrow = TRUE)
 tdf <- as.data.frame(t)
 colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
 intervals <- c(1,2,3,4,5,6)
 tdf$int <- intervals
 # library(plyr) for SQL join function (like merge but keeps order)
-tInt <- c(1e-4,0.05,0.25,0.5,0.75,0.95,0.9999)
+tInt <- c(1e-16,0.05,0.25,0.5,0.75,0.95,0.9999999999999999)
 int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points
 int <- as.data.frame(int)
 m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # join data and their intervals, plyr::join preferred to merge due to order maintenance (although actually could use merge with sort = F)
@@ -117,8 +117,9 @@ x <- as.vector(x.array) # detection indicator for every visit (length V2)
 Data <- list(N = N,
             Y = Y,
             n.Plot.pos = n.Plot.pos,
-            cpos.Cens = cpos[,2], # indicator (is censored?)
-            cpos.latent = cpos[,3], # NA values for latent observations
+            #cpos.Cens = cpos[,2], # indicator (is censored?)
+            cpos.Cens = check$int, # indicator (is censored?)
+            #cpos.latent = cpos[,3], # NA values for latent observations
             lims = lims,
             plot = plot,
             year = year,
@@ -139,7 +140,8 @@ zinit <- matrix(1, nrow = N, ncol = Y)
 inits.fn <- function() list(z = zinit,
                             tau.C = runif(1,1,5),
                             mu.C = 0.5,
-                            gamma0 = rnorm(1,0,1))
+                            gamma0 = rnorm(1,0,1),
+                            cpos.latent = c(0.25,0.15,0.375,0.625,0.85,0.975)[check$int])
 
 ######################################
 ## JAGS model
@@ -153,7 +155,7 @@ for (i in 1:N){ # N is the number of plots
     C.S[i,j] <- z[i,j] * c.Pos[i,j] # cover including zeros
     z[i,j] ~ dbern(psi[i,j]) ## true PA state of a plot within a year depends on occupancy probability psi
     psi[i,j] ~ dunif(0,1)
-    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(0.00001,0.99999)
+    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-16,0.9999999999999999)
     a.C[i,j] <- mu.C * tau.C
     b.C[i,j] <- (1 - mu.C) * tau.C
     } # end of years loop
@@ -162,14 +164,14 @@ for (i in 1:N){ # N is the number of plots
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
     cpos.Cens[k] ~ dinterval(cpos.latent[k], lims[k,])
-    cpos.latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(0.00001,0.99999) # recorded cover when present follows beta distribution
+    cpos.latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
   }
 
 ## Observation model for all plot visits ([within-year] detection within plots)
 for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
-    p.dec[a] <- min(max(0.00001, p.Dec[a]), 0.99999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
+    p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
     logit(p.Dec[a]) <- gamma0 ## + covars on detectability
   }
 

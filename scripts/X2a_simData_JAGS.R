@@ -19,14 +19,15 @@ logit <- function(x){ # logit function
 ######################################
 # Simulations based on those of Wright et al. 2017
 ######################################
-
 ##12 09 2018: breaks with N = 250, J = 3, Y = 5 e.g.
+# JAGS: "Error in node cpos[1060]"
+# this was fixed by pushing the boundaries of the beta distribution (and the detectability) closer to 0 and 1 (tested with N = 1200, J = 2, and Y = 10 -- still works)
 
 ## Could put this in a simulation function (see Wright et al. 2017)
-N <- 250 # number of spatially unique plots
-J <- 3 # number of visits to a plot within a year (assume constant for the moment)
+N <- 1200 # number of spatially unique plots
+J <- 2 # number of visits to a plot within a year (assume constant for the moment)
 psi <- 0.5 # true occupancy (average)
-Y <- 5 # total number of years of monitoring covered by the data
+Y <- 10 # total number of years of monitoring covered by the data
 mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
 gamma0 <- -1.5   #intercept for detection logistic regression # -1.5
@@ -131,7 +132,7 @@ for (i in 1:N){ # N is the number of plots
     C.S[i,j] <- z[i,j] * c.Pos[i,j] # cover including zeros
     z[i,j] ~ dbern(psi[i,j]) ## true PA state of a plot within a year depends on occupancy probability psi
     psi[i,j] ~ dunif(0,1)
-    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(0.00001,0.99999)
+    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-16,0.9999999999999999)
     a.C[i,j] <- mu.C * tau.C
     b.C[i,j] <- (1 - mu.C) * tau.C
     } # end of years loop
@@ -140,7 +141,9 @@ for (i in 1:N){ # N is the number of plots
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
     ## HERE YOU CAN POTENTIALLY ACCOUNT FOR INTERVAL CENSORED NATURE OF DATA USING dinterval() -- see X2b_simData_JAGS_intervalCens.R
-    cpos[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(0.00001,0.99999) # recorded cover when present follows beta distribution
+    cpos[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
+    
+    ## Not needed, as already in state model, leave here just for future ref.
     #a.P[k] <- C.Pos[plot[k], year[k]] * tau.P # link between final state and recorded cover
     #b.P[k] <- (1 - C.Pos[plot[k], year[k]]) * tau.P # link between final state and recorded cover
   }
@@ -149,7 +152,7 @@ for(k in 1:n.Plot.pos){
 for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
-    p.dec[a] <- min(max(0.00001, p.Dec[a]), 0.99999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
+    p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
     logit(p.Dec[a]) <- gamma0 ## + covars on detectability
   }
 
