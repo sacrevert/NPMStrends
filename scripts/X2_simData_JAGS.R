@@ -1,7 +1,7 @@
-## X2. Simulation of the types of data that we are going to be modelling, using JAGS
+## X2. Simulation of the types of data that we are going to be modelling, using JAGS initially
 # O.L. Pescott
 # 06.09.2018
-rm(list=ls())
+#rm(list=ls())
 ######################################
 library(R2jags)
 ######################################
@@ -19,24 +19,25 @@ logit <- function(x){ # logit function
 ######################################
 # Simulations based on those of Wright et al. 2017
 ######################################
+## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
 J <- 2 # number of visits to a plot within a year (assume constant for the moment)
 psi <- 0.5 # true occupancy (average)
-yr <- 3 # number of years
+Y <- 3 # total number of years of monitoring covered by the data
 mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
 gamma0 <- -1.5   #intercept for detection logistic regression # -1.5
 gamma1 <- 2   #slope for detection with %cover # 2
 
 # array of plot covers per visit per year
-y.array <- array(dim = c(N, J, yr))
-for(k in 1:yr){
+y.array <- array(dim = c(N, J, Y))
+for(k in 1:Y){
       y.array[,,k] <- matrix(rbinom(N*J, 1, psi)*rbeta(N*J, mu*phi, (1-mu)*phi), 
                                  nrow=N, ncol=J)
 }
 # make a detection history matrix based on cover data
-x.array <- array(dim = c(N, J, yr))
-for(k in 1:yr){
+x.array <- array(dim = c(N, J, Y))
+for(k in 1:Y){
   for(i in 1:N){
     for(j in 1:J){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
@@ -52,34 +53,41 @@ for(k in 1:yr){
 ######################################################
 ## Data/indicators required for running JAGS model
 ######################################################
-N1 <- N # total number of spatially unique plots (locations)
-Y <- yr # total number of years of monitoring covered by the data
- # total number of visits with positive covers
+# total number of visits with positive covers
 cpos <- as.vector(y.array)[which(as.vector(y.array) > 0)] # cover value for every positive cover
 # indicator linking positive plot k to the visit in the total visit list; length = n.Plot.pos
 plotInd <- apply(y.array, MARGIN=c(1,3), sum) # sum across visits and years within a plot (margin 1 = plot, margin 3 = year), visit information is summed
-#############
-### The following sections need generalising! Even just in the contxt of the sims here
-#############
-plot <- c(which(as.vector(plotInd[,1]) > 0), which(as.vector(plotInd[,2]) > 0), which(as.vector(plotInd[,3]) > 0)) # need plot indices within years
+#plot <- c(which(as.vector(plotInd[,1]) > 0), which(as.vector(plotInd[,2]) > 0), which(as.vector(plotInd[,3]) > 0)) # need plot indices within years
+## Generalised version
+out <- out1 <- as.numeric()
+for (i in 1:Y){ out <- which(as.vector(plotInd[,i]) > 0)
+                out1 <- c(out1,out)
+  }
+plot <- out1
 n.Plot.pos <- length(plot)
-# indicator linking positive plot k to the year of the its visit in the total visit list; length = n.Plot.pos
-year <- c(rep(1, length(which(as.vector(plotInd[,1]) > 0))), 
-          rep(2, length(which(as.vector(plotInd[,2]) > 0))), 
-          rep(3, length(which(as.vector(plotInd[,3]) > 0)))
-          )
+## indicator linking positive plot k to the year of the its visit in the total visit list; length = n.Plot.pos
+#year <- c(rep(1, length(which(as.vector(plotInd[,1]) > 0))), 
+#          rep(2, length(which(as.vector(plotInd[,2]) > 0))), 
+#          rep(3, length(which(as.vector(plotInd[,3]) > 0)))
+#          )
+## Generalised version
+out <- out1 <- as.numeric()
+for (i in 1:Y){ out <- rep(i, length(which(as.vector(plotInd[,i]) > 0)))
+                out1 <- c(out1,out)
+  }
+year <- out1
 #############
-### vc CALc NEEDS CHANGING WHEN THERE ARE UNEVEN VISITS NUMBERs ETC. BETWEEN YEARS
+### VC CALc NEEDS CHANGING WHEN THERE ARE UNEVEN VISITS NUMBERs ETC. BETWEEN YEARS (something to consider for real data)
 #############
 V2 <- N*J*yr # total number of plot visits (# plots x # visits x # years)
 # indicator linking every visit x to plot; length = V2 
-plotZ <- rep(1:N, J*yr)
+plotZ <- rep(1:N, J*Y)
 # indicator linking every visit x to year; length V2 
-yearZ <- rep(1:3, each = N*J)
+yearZ <- rep(1:Y, each = N*J)
 x <- as.vector(x.array) # detection indicator for every visit (length V2)
 
 # Data list for passing to JAGS
-Data <- list(N1 = N1,
+Data <- list(N = N,
             Y = Y,
             n.Plot.pos = n.Plot.pos,
             cpos = cpos,
@@ -98,7 +106,7 @@ Data <- list(N1 = N1,
 # To ensure conformity with the data all occupancies (ZI.*) are set to one
 # Some other parameters are also fixed to avoid extemly small likelihoods
 # but these can probably be relaxed a bit more.
-zinit <- matrix(1, nrow = N1, ncol = Y)
+zinit <- matrix(1, nrow = N, ncol = Y)
 inits.fn <- function() list(z = zinit,
                             tau.C = runif(1,1,5),
                             mu.C = 0.5,
@@ -112,7 +120,7 @@ sink('scripts/JAGS/JAGS_v0.0.txt')
 cat("
 model{
 ## State model
-for (i in 1:N1){ # N1 is the number of plots
+for (i in 1:N){ # N is the number of plots
   for (j in 1:Y){ # number of years
     C.S[i,j] <- z[i,j] * c.Pos[i,j] # cover including zeros
     z[i,j] ~ dbern(psi[i,j]) ## true PA state of a plot within a year depends on occupancy probability psi
