@@ -27,7 +27,7 @@ Y <- 3 # total number of years of monitoring covered by the data
 mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
 gamma0 <- -1.5   #intercept for detection logistic regression # -1.5
-gamma1 <- 2   #slope for detection with %cover # 2
+gamma1 <- 2   #slope for detection with %cover # 2 # not currently in model though
 
 # array of plot covers per visit per year
 y.array <- array(dim = c(N, J, Y))
@@ -55,31 +55,34 @@ for(k in 1:Y){
 ######################################################
 # total number of visits with positive covers
 cpos <- as.vector(y.array)[which(as.vector(y.array) > 0)] # cover value for every positive cover
-# indicator linking positive plot k to the visit in the total visit list; length = n.Plot.pos
-plotInd <- apply(y.array, MARGIN=c(1,3), sum) # sum across visits and years within a plot (margin 1 = plot, margin 3 = year), visit information is summed
-#plot <- c(which(as.vector(plotInd[,1]) > 0), which(as.vector(plotInd[,2]) > 0), which(as.vector(plotInd[,3]) > 0)) # need plot indices within years
-## Generalised version
-out <- out1 <- as.numeric()
-for (i in 1:Y){ out <- which(as.vector(plotInd[,i]) > 0)
-                out1 <- c(out1,out)
+n.Plot.pos <- length(cpos)
+# indicator linking positive plot k to the visit in the total visit list; length = cpos
+out <- out1 <-  numeric()
+for(k in 1:Y){
+  for(i in 1:N){
+    for(j in 1:J){
+      out <- ifelse(y.array[i, j, k] > 0, i, NA)
+      out1 <- c(out1, out)
+    }
   }
-plot <- out1
-n.Plot.pos <- length(plot)
-## indicator linking positive plot k to the year of the its visit in the total visit list; length = n.Plot.pos
-#year <- c(rep(1, length(which(as.vector(plotInd[,1]) > 0))), 
-#          rep(2, length(which(as.vector(plotInd[,2]) > 0))), 
-#          rep(3, length(which(as.vector(plotInd[,3]) > 0)))
-#          )
-## Generalised version
-out <- out1 <- as.numeric()
-for (i in 1:Y){ out <- rep(i, length(which(as.vector(plotInd[,i]) > 0)))
-                out1 <- c(out1,out)
+}
+plot <- out1[!is.na(out1)]
+
+out <- out1 <-  numeric()
+for(k in 1:Y){
+  for(i in 1:N){
+    for(j in 1:J){
+      out <- ifelse(y.array[i, j, k] > 0, k, NA)
+      out1 <- c(out1, out)
+    }
   }
-year <- out1
+}
+year <- out1[!is.na(out1)]
+
 #############
 ### VC CALc NEEDS CHANGING WHEN THERE ARE UNEVEN VISITS NUMBERs ETC. BETWEEN YEARS (something to consider for real data)
 #############
-V2 <- N*J*yr # total number of plot visits (# plots x # visits x # years)
+V2 <- N*J*Y # total number of plot visits (# plots x # visits x # years)
 # indicator linking every visit x to plot; length = V2 
 plotZ <- rep(1:N, J*Y)
 # indicator linking every visit x to year; length V2 
@@ -133,7 +136,7 @@ for (i in 1:N){ # N is the number of plots
 
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
-    ## HERE YOU CAN POTENTIALLY ACCOUNT FOR INTERVAL CENSORED NATURE OF DATA USING dinterval()
+    ## HERE YOU CAN POTENTIALLY ACCOUNT FOR INTERVAL CENSORED NATURE OF DATA USING dinterval() -- see X2b_simData_JAGS_intervalCens.R
     cpos[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(0.00001,0.99999) # recorded cover when present follows beta distribution
     #a.P[k] <- C.Pos[plot[k], year[k]] * tau.P # link between final state and recorded cover
     #b.P[k] <- (1 - C.Pos[plot[k], year[k]]) * tau.P # link between final state and recorded cover

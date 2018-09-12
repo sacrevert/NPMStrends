@@ -14,10 +14,8 @@ for (i in 1:N){ # N is the number of plots
 
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
-    ## HERE YOU CAN POTENTIALLY ACCOUNT FOR INTERVAL CENSORED NATURE OF DATA USING dinterval() -- see X2b_simData_JAGS_intervalCens.R
-    cpos[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(0.00001,0.99999) # recorded cover when present follows beta distribution
-    #a.P[k] <- C.Pos[plot[k], year[k]] * tau.P # link between final state and recorded cover
-    #b.P[k] <- (1 - C.Pos[plot[k], year[k]]) * tau.P # link between final state and recorded cover
+    cpos.Cens[k] ~ dinterval(cpos.latent[k], lims[k,])
+    cpos.latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(0.00001,0.99999) # recorded cover when present follows beta distribution
   }
 
 ## Observation model for all plot visits ([within-year] detection within plots)

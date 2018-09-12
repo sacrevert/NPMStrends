@@ -55,44 +55,58 @@ for(k in 1:Y){
 ## Data/indicators required for running JAGS model
 ######################################################
 # total number of visits with positive covers
-cpos <- matrix(NA, nrow = length(which(as.vector(y.array) > 0)), ncol = 2) # empty matrix for actual covers and cover classes
-cpos[,1] <- as.vector(y.array)[which(as.vector(y.array) > 0)] # cover value for every positive cover
+cpos <- matrix(NA, nrow = length(as.vector(y.array)[which(as.vector(y.array) > 0)]), ncol = 3) # empty matrix for actual covers and cover classes
+cpos[,1] <- as.vector(y.array)[which(as.vector(y.array) > 0)] # actual cover value for every positive cover
+cpos[,2] <- 1 # indicator stating the observation censored
+cpos[,3] <- NA # NA values for latent variable
 # code borrowed from Pescott et al. 2016 Power paper:
-t <- c(
-t = matrix(t, nrow = 12, ncol = 2, byrow = TRUE)
+t <- c(1e-4,0.05,
+       0.05,0.25,
+       0.25,0.5,
+       0.5,0.75,
+       0.75,0.95,
+       0.95,0.9999)
+t = matrix(t, nrow = 6, ncol = 2, byrow = TRUE)
 tdf <- as.data.frame(t)
 colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
-intervals <- c(1,2,3,4,5,6,7,8,9,10,11,12)
+intervals <- c(1,2,3,4,5,6)
 tdf$int <- intervals
+# library(plyr) for SQL join function (like merge but keeps order)
+tInt <- c(1e-4,0.05,0.25,0.5,0.75,0.95,0.9999)
+int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points
+int <- as.data.frame(int)
+m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # join data and their intervals, plyr::join preferred to merge due to order maintenance (although actually could use merge with sort = F)
+lims <- m1[,2:3] # censorLimitVec has the intervals for all points
+check <- cbind(cpos, m1) # just for quick visual check that all is well
 
-for (i in 1:nrow(cpos)){ # classify covers in classes according to relevant scale
-      cpos[,2] <- cpos[,1]
+n.Plot.pos <- nrow(cpos)
+# indicator linking positive plot k to the visit in the total visit list; length = cpos
+out <- out1 <-  numeric()
+for(k in 1:Y){
+  for(i in 1:N){
+    for(j in 1:J){
+      out <- ifelse(y.array[i, j, k] > 0, i, NA)
+      out1 <- c(out1, out)
+    }
   }
-# indicator linking positive plot k to the visit in the total visit list; length = n.Plot.pos
-plotInd <- apply(y.array, MARGIN=c(1,3), sum) # sum across visits and years within a plot (margin 1 = plot, margin 3 = year), visit information is summed
-#plot <- c(which(as.vector(plotInd[,1]) > 0), which(as.vector(plotInd[,2]) > 0), which(as.vector(plotInd[,3]) > 0)) # need plot indices within years
-## Generalised version
-out <- out1 <- as.numeric()
-for (i in 1:Y){ out <- which(as.vector(plotInd[,i]) > 0)
-                out1 <- c(out1,out)
+}
+plot <- out1[!is.na(out1)]
+
+out <- out1 <-  numeric()
+for(k in 1:Y){
+  for(i in 1:N){
+    for(j in 1:J){
+      out <- ifelse(y.array[i, j, k] > 0, k, NA)
+      out1 <- c(out1, out)
+    }
   }
-plot <- out1
-n.Plot.pos <- length(plot)
-## indicator linking positive plot k to the year of the its visit in the total visit list; length = n.Plot.pos
-#year <- c(rep(1, length(which(as.vector(plotInd[,1]) > 0))), 
-#          rep(2, length(which(as.vector(plotInd[,2]) > 0))), 
-#          rep(3, length(which(as.vector(plotInd[,3]) > 0)))
-#          )
-## Generalised version
-out <- out1 <- as.numeric()
-for (i in 1:Y){ out <- rep(i, length(which(as.vector(plotInd[,i]) > 0)))
-                out1 <- c(out1,out)
-  }
-year <- out1
+}
+year <- out1[!is.na(out1)]
+
 #############
 ### VC CALc NEEDS CHANGING WHEN THERE ARE UNEVEN VISITS NUMBERs ETC. BETWEEN YEARS (something to consider for real data)
 #############
-V2 <- N*J*yr # total number of plot visits (# plots x # visits x # years)
+V2 <- N*J*Y # total number of plot visits (# plots x # visits x # years)
 # indicator linking every visit x to plot; length = V2 
 plotZ <- rep(1:N, J*Y)
 # indicator linking every visit x to year; length V2 
@@ -103,7 +117,9 @@ x <- as.vector(x.array) # detection indicator for every visit (length V2)
 Data <- list(N = N,
             Y = Y,
             n.Plot.pos = n.Plot.pos,
-            cpos = cpos,
+            cpos.Cens = cpos[,2], # indicator (is censored?)
+            cpos.latent = cpos[,3], # NA values for latent observations
+            lims = lims,
             plot = plot,
             year = year,
             V2 = V2,
@@ -123,28 +139,13 @@ zinit <- matrix(1, nrow = N, ncol = Y)
 inits.fn <- function() list(z = zinit,
                             tau.C = runif(1,1,5),
                             mu.C = 0.5,
-                            gamma0 = rnorm(1,0,1)
-                            )
+                            gamma0 = rnorm(1,0,1))
 
 ######################################
 ## JAGS model
 ######################################
 sink('scripts/JAGS/JAGS_v0.1_cens.txt')
 cat("
-data{
-  lim[1] <- 1e-16
-  lim[2] <- 0.05
-  lim[3] <- 0.25
-  lim[4] <- 0.5
-  lim[5] <- 0.75
-  lim[6] <- 0.95
-  lim.0[1] <- 0
-  lim.0[7] <- 1
-  for(i in 2:6){
-    lim.0[i] <- lim[i]
-  }
-}
-
 model{
 ## State model
 for (i in 1:N){ # N is the number of plots
@@ -160,7 +161,7 @@ for (i in 1:N){ # N is the number of plots
 
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
-    cpos[k] ~ dinterval(cpos.latent[k], lim)
+    cpos.Cens[k] ~ dinterval(cpos.latent[k], lims[k,])
     cpos.latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(0.00001,0.99999) # recorded cover when present follows beta distribution
   }
 
@@ -181,7 +182,7 @@ tau.C ~ dt(0, 0.01, 1)T(0,)
 ", fill = TRUE)
 sink()
 
-jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.0.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
+jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.1_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
 para.names <- c('mu.C', 'tau.C', 'gamma0')
 # Continue the MCMC runs with sampling
