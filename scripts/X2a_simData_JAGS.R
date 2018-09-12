@@ -110,8 +110,8 @@ Data <- list(N = N,
 ## Initialisation of values for JAGS chains
 ###########################################
 # Initial parameter values for JAGS
-# To ensure conformity with the data all occupancies (ZI.*) are set to one
-# Some other parameters are also fixed to avoid extemly small likelihoods
+# To ensure conformity with the data all occupancies (z) are set to one
+# Some other parameters are also fixed to avoid extremely small likelihoods
 # but these can probably be relaxed a bit more.
 zinit <- matrix(1, nrow = N, ncol = Y)
 inits.fn <- function() list(z = zinit,
