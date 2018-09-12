@@ -19,15 +19,18 @@ logit <- function(x){ # logit function
 ######################################
 # Simulations based on those of Wright et al. 2017
 ######################################
+
+##12 09 2018: breaks with N = 250, J = 3, Y = 5 e.g.
+
 ## Could put this in a simulation function (see Wright et al. 2017)
-N <- 100 # number of spatially unique plots
-J <- 2 # number of visits to a plot within a year (assume constant for the moment)
+N <- 250 # number of spatially unique plots
+J <- 3 # number of visits to a plot within a year (assume constant for the moment)
 psi <- 0.5 # true occupancy (average)
-Y <- 3 # total number of years of monitoring covered by the data
+Y <- 5 # total number of years of monitoring covered by the data
 mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
 gamma0 <- -1.5   #intercept for detection logistic regression # -1.5
-gamma1 <- 2   #slope for detection with %cover # 2 # not currently in model though
+gamma1 <- 1   #slope for detection with %cover # 1 # not currently in model though
 
 # array of plot covers per visit per year
 y.array <- array(dim = c(N, J, Y))
