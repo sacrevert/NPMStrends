@@ -3,6 +3,11 @@
 # O.L. Pescott
 # 12.09.2018
 #rm(list=ls())
+
+### NOTES ###
+# 12.09.2018 -- Currently an issue with JAGS: "Error in node cpos.Cens[1] Node inconsistent with parents"
+# -- need to compare the approaches to dinterval() used by Pescott et al. 2016 and Wright et al. (2017) -- they appear to be different
+
 ######################################
 library(R2jags)
 ######################################
