@@ -1,6 +1,7 @@
-## X2. Simulation of the types of data that we are going to be modelling, using JAGS initially
+## X2b. Simulation of the types of data that we are going to be modelling, using JAGS initially
+# Now with interval censoring
 # O.L. Pescott
-# 06.09.2018
+# 12.09.2018
 #rm(list=ls())
 ######################################
 library(R2jags)
@@ -54,7 +55,19 @@ for(k in 1:Y){
 ## Data/indicators required for running JAGS model
 ######################################################
 # total number of visits with positive covers
-cpos <- as.vector(y.array)[which(as.vector(y.array) > 0)] # cover value for every positive cover
+cpos <- matrix(NA, nrow = length(which(as.vector(y.array) > 0)), ncol = 2) # empty matrix for actual covers and cover classes
+cpos[,1] <- as.vector(y.array)[which(as.vector(y.array) > 0)] # cover value for every positive cover
+# code borrowed from Pescott et al. 2016 Power paper:
+t <- c(
+t = matrix(t, nrow = 12, ncol = 2, byrow = TRUE)
+tdf <- as.data.frame(t)
+colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
+intervals <- c(1,2,3,4,5,6,7,8,9,10,11,12)
+tdf$int <- intervals
+
+for (i in 1:nrow(cpos)){ # classify covers in classes according to relevant scale
+      cpos[,2] <- cpos[,1]
+  }
 # indicator linking positive plot k to the visit in the total visit list; length = n.Plot.pos
 plotInd <- apply(y.array, MARGIN=c(1,3), sum) # sum across visits and years within a plot (margin 1 = plot, margin 3 = year), visit information is summed
 #plot <- c(which(as.vector(plotInd[,1]) > 0), which(as.vector(plotInd[,2]) > 0), which(as.vector(plotInd[,3]) > 0)) # need plot indices within years
@@ -116,8 +129,22 @@ inits.fn <- function() list(z = zinit,
 ######################################
 ## JAGS model
 ######################################
-sink('scripts/JAGS/JAGS_v0.0.txt')
+sink('scripts/JAGS/JAGS_v0.1_cens.txt')
 cat("
+data{
+  lim[1] <- 1e-16
+  lim[2] <- 0.05
+  lim[3] <- 0.25
+  lim[4] <- 0.5
+  lim[5] <- 0.75
+  lim[6] <- 0.95
+  lim.0[1] <- 0
+  lim.0[7] <- 1
+  for(i in 2:6){
+    lim.0[i] <- lim[i]
+  }
+}
+
 model{
 ## State model
 for (i in 1:N){ # N is the number of plots
@@ -133,10 +160,8 @@ for (i in 1:N){ # N is the number of plots
 
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
-    ## HERE YOU CAN POTENTIALLY ACCOUNT FOR INTERVAL CENSORED NATURE OF DATA USING dinterval()
-    cpos[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(0.00001,0.99999) # recorded cover when present follows beta distribution
-    #a.P[k] <- C.Pos[plot[k], year[k]] * tau.P # link between final state and recorded cover
-    #b.P[k] <- (1 - C.Pos[plot[k], year[k]]) * tau.P # link between final state and recorded cover
+    cpos[k] ~ dinterval(cpos.latent[k], lim)
+    cpos.latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(0.00001,0.99999) # recorded cover when present follows beta distribution
   }
 
 ## Observation model for all plot visits ([within-year] detection within plots)
