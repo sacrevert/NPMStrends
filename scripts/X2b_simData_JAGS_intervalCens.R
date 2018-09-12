@@ -71,16 +71,16 @@ tdf <- as.data.frame(t)
 colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
 intervals <- c(1,2,3,4,5,6)
 tdf$int <- intervals
-# library(plyr) for SQL join function (like merge but keeps order)
+# library(plyr) for SQL join function (like merge but keeps order) -- although actually could use merge with sort = F
 tInt <- c(1e-16,0.05,0.25,0.5,0.75,0.95,0.9999999999999999)
 int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points
 int <- as.data.frame(int)
-m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # join data and their intervals, plyr::join preferred to merge due to order maintenance (although actually could use merge with sort = F)
-lims <- m1[,2:3] # censorLimitVec has the intervals for all points
-check <- cbind(cpos, m1) # just for quick visual check that all is well
+m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point
+lims <- m1[,2:3] # has the intervals for all points
+check <- cbind(cpos, m1); head(check); tail(check) # just for quick visual check that all is well
 
 n.Plot.pos <- nrow(cpos)
-# indicator linking positive plot k to the visit in the total visit list; length = cpos
+# indicators linking positive plot k to the correct plots and years; length = nrow(cpos)
 out <- out1 <-  numeric()
 for(k in 1:Y){
   for(i in 1:N){
