@@ -27,12 +27,12 @@ logit <- function(x){ # logit function
 ######################################
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
-J <- 5 # number of visits to a plot within a year (assume constant for the moment)
+J <- 10 # number of visits to a plot within a year (assume constant for the moment)
 psi <- 0.5 # true occupancy (average)
 Y <- 3 # total number of years of monitoring covered by the data
 mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
-gamma0 <- -1.5   #intercept for detection logistic regression # -1.5
+gamma0 <- -1   #intercept for detection logistic regression # -1.5
 gamma1 <- 1   #slope for detection with %cover # 2
 
 # array of plot covers per visit per year
@@ -85,7 +85,7 @@ int <- as.data.frame(int)
 m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point
 lims <- m1[,2:3] # has the intervals for all points
 check <- cbind(cpos, m1); head(check); tail(check) # just for quick visual check that all is well
-cpos.Cens <- rep(T, nrow(cpos))
+cpos.Cens <- rep(1, nrow(cpos))
 cpos.Latent <- cpos[,3] # just NAs
 
 n.Plot.pos <- nrow(cpos)
@@ -150,7 +150,7 @@ inits.fn <- function() list(z = zinit,
                             tau.C = runif(1,1,5),
                             mu.C = 0.5,
                             gamma0 = rnorm(1,0,1),
-                            cpos.Latent = c(0.25,0.15,0.375,0.625,0.85,0.975)[check$int]
+                            cpos.Latent = c(0.025,0.15,0.375,0.625,0.85,0.975)[check$int]
                             )
 
 ######################################
