@@ -14,8 +14,8 @@ for (i in 1:N){ # N is the number of plots
 
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
-    cpos.Cens[k] ~ dinterval(cpos.latent[k], lims[k,])
-    cpos.latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
+    cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
+    cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
   }
 
 ## Observation model for all plot visits ([within-year] detection within plots)

@@ -24,13 +24,14 @@ logit <- function(x){ # logit function
 # this was fixed by pushing the boundaries of the beta distribution (and the detectability) closer to 0 and 1 (tested with N = 1200, J = 2, and Y = 10 -- still works)
 
 ## Could put this in a simulation function (see Wright et al. 2017)
-N <- 1200 # number of spatially unique plots
-J <- 2 # number of visits to a plot within a year (assume constant for the moment)
-psi <- 0.5 # true occupancy (average)
-Y <- 10 # total number of years of monitoring covered by the data
-mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
+N <- 100 # number of spatially unique plots
+J <- 2# number of visits to a plot within a year (assume constant for the moment)
+psi <- 0.6 # true occupancy (average)
+Y <- 3 # total number of years of monitoring covered by the data
+mu <- 0.3      #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
-gamma0 <- -1.5   #intercept for detection logistic regression # -1.5
+## accurately estimated gamma0 seems fairly noisy, even with 10 visits within a year (need to think about this)
+gamma0 <- -1.5  #intercept for detection logistic regression # -1.5
 gamma1 <- 1   #slope for detection with %cover # 1 # not currently in model though
 
 # array of plot covers per visit per year
@@ -47,11 +48,13 @@ for(k in 1:Y){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
                                  rbinom(1, 1, 
                                         #plogis(gamma0 + y.array[i, j, k])), # detection function 1
-                                        plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
+                                       plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
+                                 #1,
                                  0)
     }
   }
 }
+y.array[which(x.array==0)] <- 0 # if the plant was not actually detected, then set the recorded cover to zero as well
 ###################################### END OF SIMS
 
 ######################################################
@@ -63,8 +66,8 @@ n.Plot.pos <- length(cpos)
 # indicator linking positive plot k to the visit in the total visit list; length = cpos
 out <- out1 <-  numeric()
 for(k in 1:Y){
-  for(i in 1:N){
-    for(j in 1:J){
+  for(j in 1:J){
+    for(i in 1:N){
       out <- ifelse(y.array[i, j, k] > 0, i, NA)
       out1 <- c(out1, out)
     }
@@ -74,8 +77,8 @@ plot <- out1[!is.na(out1)]
 
 out <- out1 <-  numeric()
 for(k in 1:Y){
-  for(i in 1:N){
-    for(j in 1:J){
+  for(j in 1:J){
+    for(i in 1:N){
       out <- ifelse(y.array[i, j, k] > 0, k, NA)
       out1 <- c(out1, out)
     }

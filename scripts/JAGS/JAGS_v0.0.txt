@@ -16,6 +16,8 @@ for (i in 1:N){ # N is the number of plots
 for(k in 1:n.Plot.pos){ 
     ## HERE YOU CAN POTENTIALLY ACCOUNT FOR INTERVAL CENSORED NATURE OF DATA USING dinterval() -- see X2b_simData_JAGS_intervalCens.R
     cpos[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
+    
+    ## Not needed, as already in state model, leave here just for future ref.
     #a.P[k] <- C.Pos[plot[k], year[k]] * tau.P # link between final state and recorded cover
     #b.P[k] <- (1 - C.Pos[plot[k], year[k]]) * tau.P # link between final state and recorded cover
   }

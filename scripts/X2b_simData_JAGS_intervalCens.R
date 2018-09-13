@@ -27,13 +27,13 @@ logit <- function(x){ # logit function
 ######################################
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
-J <- 2 # number of visits to a plot within a year (assume constant for the moment)
+J <- 5 # number of visits to a plot within a year (assume constant for the moment)
 psi <- 0.5 # true occupancy (average)
 Y <- 3 # total number of years of monitoring covered by the data
 mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
 gamma0 <- -1.5   #intercept for detection logistic regression # -1.5
-gamma1 <- 2   #slope for detection with %cover # 2
+gamma1 <- 1   #slope for detection with %cover # 2
 
 # array of plot covers per visit per year
 y.array <- array(dim = c(N, J, Y))
@@ -47,18 +47,20 @@ for(k in 1:Y){
   for(i in 1:N){
     for(j in 1:J){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
-                                 rbinom(1, 1, 
+                                 #rbinom(1, 1, 
                                         #plogis(gamma0 + y.array[i, j, k])), # detection function 1
-                                        plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
+                                #        plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
+                                 1,
                                  0)
     }
   }
 }
+y.array[which(x.array==0)] <- 0 # if the plant was not actually detected, then set the recorded cover to zero as well
 ###################################### END OF SIMS
 
-######################################################
+##################################################
 ## Data/indicators required for running JAGS model
-######################################################
+##################################################
 # total number of visits with positive covers
 cpos <- matrix(NA, nrow = length(as.vector(y.array)[which(as.vector(y.array) > 0)]), ncol = 3) # empty matrix for actual covers and cover classes
 cpos[,1] <- as.vector(y.array)[which(as.vector(y.array) > 0)] # actual cover value for every positive cover
@@ -83,15 +85,17 @@ int <- as.data.frame(int)
 m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point
 lims <- m1[,2:3] # has the intervals for all points
 check <- cbind(cpos, m1); head(check); tail(check) # just for quick visual check that all is well
+cpos.Cens <- rep(T, nrow(cpos))
+cpos.Latent <- cpos[,3] # just NAs
 
 n.Plot.pos <- nrow(cpos)
 # indicators linking positive plot k to the correct plots and years; length = nrow(cpos)
 out <- out1 <-  numeric()
 for(k in 1:Y){
-  for(i in 1:N){
-    for(j in 1:J){
-      out <- ifelse(y.array[i, j, k] > 0, i, NA)
-      out1 <- c(out1, out)
+  for(j in 1:J){
+    for(i in 1:N){
+    out <- ifelse(y.array[i, j, k] > 0, i, NA)
+    out1 <- c(out1, out)
     }
   }
 }
@@ -99,10 +103,10 @@ plot <- out1[!is.na(out1)]
 
 out <- out1 <-  numeric()
 for(k in 1:Y){
-  for(i in 1:N){
-    for(j in 1:J){
-      out <- ifelse(y.array[i, j, k] > 0, k, NA)
-      out1 <- c(out1, out)
+  for(j in 1:J){
+    for(i in 1:N){
+    out <- ifelse(y.array[i, j, k] > 0, k, NA)
+    out1 <- c(out1, out)
     }
   }
 }
@@ -123,8 +127,8 @@ Data <- list(N = N,
             Y = Y,
             n.Plot.pos = n.Plot.pos,
             #cpos.Cens = cpos[,2], # indicator (is censored?)
-            cpos.Cens = check$int, # indicator (is censored?)
-            #cpos.latent = cpos[,3], # NA values for latent observations
+            cpos.Cens = cpos.Cens, # indicator (is censored?)
+            cpos.Latent = cpos.Latent, # NA values for latent observations
             lims = lims,
             plot = plot,
             year = year,
@@ -146,7 +150,8 @@ inits.fn <- function() list(z = zinit,
                             tau.C = runif(1,1,5),
                             mu.C = 0.5,
                             gamma0 = rnorm(1,0,1),
-                            cpos.latent = c(0.25,0.15,0.375,0.625,0.85,0.975)[check$int])
+                            cpos.Latent = c(0.25,0.15,0.375,0.625,0.85,0.975)[check$int]
+                            )
 
 ######################################
 ## JAGS model
@@ -168,8 +173,8 @@ for (i in 1:N){ # N is the number of plots
 
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
-    cpos.Cens[k] ~ dinterval(cpos.latent[k], lims[k,])
-    cpos.latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
+    cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
+    cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
   }
 
 ## Observation model for all plot visits ([within-year] detection within plots)
