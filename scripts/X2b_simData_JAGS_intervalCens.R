@@ -47,10 +47,10 @@ for(k in 1:Y){
   for(i in 1:N){
     for(j in 1:J){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
-                                 #rbinom(1, 1, 
+                                 rbinom(1, 1, 
                                         #plogis(gamma0 + y.array[i, j, k])), # detection function 1
-                                #        plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
-                                 1,
+                                        plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
+                                 #1,
                                  0)
     }
   }
