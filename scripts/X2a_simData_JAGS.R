@@ -25,14 +25,14 @@ logit <- function(x){ # logit function
 
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
-J <- 2# number of visits to a plot within a year (assume constant for the moment)
+J <- 5# number of visits to a plot within a year (assume constant for the moment)
 psi <- 0.6 # true occupancy (average)
 Y <- 3 # total number of years of monitoring covered by the data
 mu <- 0.3      #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
 ## accurately estimated gamma0 seems fairly noisy, even with 10 visits within a year (need to think about this)
-gamma0 <- -1.5  #intercept for detection logistic regression # -1.5
-gamma1 <- 1   #slope for detection with %cover # 1 # not currently in model though
+gamma0 <- -1  #intercept for detection logistic regression # -1 (moderate detectabilty on average) plogis(-1) = 0.2689 (plus cover added)
+gamma1 <- 1   #slope for detection with %cover # 1 # not currently in JAGS model though
 
 # array of plot covers per visit per year
 y.array <- array(dim = c(N, J, Y))
@@ -48,7 +48,7 @@ for(k in 1:Y){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
                                  rbinom(1, 1, 
                                         #plogis(gamma0 + y.array[i, j, k])), # detection function 1
-                                       plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
+                                       plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2 with slope parameter
                                  #1,
                                  0)
     }
@@ -171,6 +171,9 @@ sink()
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.0.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
 para.names <- c('mu.C', 'tau.C', 'gamma0')
+#para.names <- c('psi')
+#mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
+#mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
 # Continue the MCMC runs with sampling
 samples <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
 ## Inspect results
