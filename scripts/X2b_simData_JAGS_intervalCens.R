@@ -1,5 +1,11 @@
 ## X2b. Simulation of the types of data that we are going to be modelling, using JAGS initially
 # Now with interval censoring!
+# note that this model only uses and observation/detection model for the repeat visits within a year, not for the cover data
+# whilst it is reasonable to assume that the occupancy state is stable within years (obviously this is not 100% true all the time, but is reasonable)
+# it is not reasonable to assume that the repeat visits to a plot provide replicated information about a stable cover for a species (as in Wright et al. 2017,
+# where there are repeat obsevations, i.e. Quality Assurance, within a single visit), for this reason the cover values are taken directly as accurate 
+# observations and are included in the "state model" directly.
+#
 # O.L. Pescott
 # 12.09.2018
 #rm(list=ls())

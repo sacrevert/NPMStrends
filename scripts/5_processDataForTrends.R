@@ -4,11 +4,34 @@
 rm(list=ls())
 
 load(file = "data/Achi_mille_grassSamples_20180917.Rdata")
-head(Achi_mill_PAN)
+head(Achi_mill_PAN); unique(Achi_mill_PAN$dominUnify)
+
+# domin things
+domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors = F)
+# t.per <- c(0.001,0.01,0.03,0.05,0.1,0.25,0.33,0.50,0.75,0.95,0.99) these are the cutpoints used in Pescott et al. 2016
 
 ###########################################
-## Process data for JAGS
+## Notes about what types of information we need for the model to work (taken from "Data list" below)
 ###########################################
+#N = N # the total number of plots
+#Y = Y # the total number of years
+#n.Plot.pos = n.Plot.pos # the total number of positive cover observations across all plot visits (= samples in NPMS database terms)
+#cpos.Cens = cpos.Cens # indicator (is censored?) -- can be T/F or 1/0, doesn't matter as long as there is a binary interpretation
+## note that for the NPMS all observations are censored; this might not be true though if we combined with CS data or similar with more "accurate" cover data
+#cpos.Latent = cpos.Latent # just NA values for latent observations
+#lims = lims # the limits to the intervals used for censoring (again, these should be stable unless data collected under different schemes are combined)
+#plot = plot # an indicator linking a percentage cover observation to its parent (spatially unique) plot
+#year = year # an indicator linking a percentage cover observation to its parent year
+#V2 = V2 # the total number if visits (samples), irrespective of whether there is a postive cover for a species or not
+#plotZ = plotZ # an indicator linking a visit to its parent (spatially unique) plot
+#yearZ = yearZ # an indicator linking a visit to its parent year
+#x = x # visit-level detection history (binary)
+
+
+###########################################
+## Process example data for JAGS
+###########################################
+## 1. Achillea millefolium in grassland samples
 
 
 
