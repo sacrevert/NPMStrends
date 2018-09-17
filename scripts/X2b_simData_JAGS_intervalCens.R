@@ -109,7 +109,7 @@ for(k in 1:Y){
 year <- out1[!is.na(out1)]
 
 #############
-### VC CALc NEEDS CHANGING WHEN THERE ARE UNEVEN VISITS NUMBERs ETC. BETWEEN YEARS (something to consider for real data)
+### NEEDS CHANGING WHEN THERE ARE UNEVEN VISITS NUMBERs ETC. BETWEEN YEARS (something to consider for real data)
 #############
 V2 <- N*J*Y # total number of plot visits (# plots x # visits x # years)
 # indicator linking every visit x to plot; length = V2 
