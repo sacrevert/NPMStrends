@@ -32,7 +32,8 @@ domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors =
 ## Process example data for JAGS
 ###########################################
 ## 1. Achillea millefolium in grassland samples
-
+N <- unique(Achi_mill_PAN$plot_id)
+Y <- # why are there <NA> values in the date column!
 
 
 
