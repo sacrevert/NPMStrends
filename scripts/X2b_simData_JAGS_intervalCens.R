@@ -1,12 +1,8 @@
 ## X2b. Simulation of the types of data that we are going to be modelling, using JAGS initially
-# Now with interval censoring
+# Now with interval censoring!
 # O.L. Pescott
 # 12.09.2018
 #rm(list=ls())
-
-### NOTES ###
-# 12.09.2018 -- Currently an issue with JAGS: "Error in node cpos.Cens[1] Node inconsistent with parents"
-# -- need to compare the approaches to dinterval() used by Pescott et al. 2016 and Wright et al. (2017) -- they appear to be different
 
 ######################################
 library(R2jags)
@@ -50,7 +46,7 @@ for(k in 1:Y){
                                  rbinom(1, 1, 
                                         #plogis(gamma0 + y.array[i, j, k])), # detection function 1
                                         plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
-                                 #1,
+                                 #1, # for testing
                                  0)
     }
   }
