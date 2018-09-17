@@ -193,6 +193,9 @@ sink()
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.1_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
 para.names <- c('mu.C', 'tau.C', 'gamma0')
+#para.names <- c('psi')
+#mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
+#mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
 # Continue the MCMC runs with sampling
 samples <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
 ## Inspect results
