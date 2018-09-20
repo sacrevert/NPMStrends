@@ -20,13 +20,6 @@ domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors =
 ## note that for the NPMS all observations are censored; this might not be true though if we combined with CS data or similar with more "accurate" cover data
 #cpos.Latent = cpos.Latent # just NA values for latent observations
 #lims = lims # the limits to the intervals used for censoring (again, these should be stable unless data collected under different schemes are combined)
-#plot = plot # an indicator linking a percentage cover observation to its parent (spatially unique) plot
-#year = year # an indicator linking a percentage cover observation to its parent year
-#V2 = V2 # the total number if visits (samples), irrespective of whether there is a postive cover for a species or not
-#plotZ = plotZ # an indicator linking a visit to its parent (spatially unique) plot
-#yearZ = yearZ # an indicator linking a visit to its parent year
-#x = x # visit-level detection history (binary)
-
 
 ###########################################
 ## Process example data for JAGS
@@ -34,9 +27,45 @@ domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors =
 ## 1. Achillea millefolium in grassland samples
 N <- unique(Achi_mill_PAN$plot_id)
 Y <- length(unique(format(Achi_mill_PAN$date.x, "%Y")))
+n.Plot.pos <- length(Achi_mill_PAN$dominUnify[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify)]) # 300
+cpos.Cens <- rep(1, n.Plot.pos)
+cpos.Latent <- rep(NA, n.Plot.pos)
+t <- c(1e-16, 0.001, 
+       0.001, 0.01,
+       0.01, 0.03,
+       0.03, 0.05,
+       0.05, 0.1,
+       0.1, 0.25,
+       0.25, 0.33,
+       0.33, 0.5,
+       0.5, 0.75,
+       0.75, 0.95, 
+       0.95, 0.9999999999999999)
+t = matrix(t, nrow = 11, ncol = 2, byrow = TRUE)
+tdf <- as.data.frame(t)
+colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
+intervals <- c(0,1,2,3,4,5,6,7,8,9,10)
+tdf$int <- intervals
+# positive rows only
+spPos <- Achi_mill_PAN[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify),]
+spPos <- merge(spPos, tdf, by.x = "dominUnify", by.y = "int", all.x = T, all.y = F)
+## what about missing values?
+lims <- spPos[,19:20] # has the intervals for all points
 
+## Other required data
+#plot = plot # an indicator linking a percentage cover observation to its parent (spatially unique) plot
+#year = year # an indicator linking a percentage cover observation to its parent year
+#V2 = V2 # the total number if visits (samples), irrespective of whether there is a postive cover for a species or not
+#plotZ = plotZ # an indicator linking a visit to its parent (spatially unique) plot
+#yearZ = yearZ # an indicator linking a visit to its parent year
+#x = x # visit-level detection history (binary)
 
-
+plot = plot # an indicator linking a percentage cover observation to its parent (spatially unique) plot
+year = year # an indicator linking a percentage cover observation to its parent year
+V2 = V2 # the total number if visits (samples), irrespective of whether there is a postive cover for a species or not
+plotZ = plotZ # an indicator linking a visit to its parent (spatially unique) plot
+yearZ = yearZ # an indicator linking a visit to its parent year
+x = x # visit-level detection history (binary)
 
 ###########################################
 ## Send data to JAGS
