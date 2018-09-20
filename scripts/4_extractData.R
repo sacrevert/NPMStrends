@@ -15,5 +15,5 @@ grassSamples <- getSamples(habsList = grasslands)
 Achi_mill_PAN <- spSamplePA(samples = grassSamples, species = "Achillea millefolium")
 head(Achi_mill_PAN); tail(Achi_mill_PAN)
 
-## Save dataset (17.09.2018)
-save(Achi_mill_PAN, file = "data/Achi_mille_grassSamples_20180917.Rdata")
+## Save dataset (20.09.2018)
+save(Achi_mill_PAN, file = "data/Achi_mille_grassSamples_20180920.Rdata")

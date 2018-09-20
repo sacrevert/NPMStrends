@@ -33,7 +33,7 @@ domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors =
 ###########################################
 ## 1. Achillea millefolium in grassland samples
 N <- unique(Achi_mill_PAN$plot_id)
-Y <- # why are there <NA> values in the date column!
+Y <- length(unique(format(Achi_mill_PAN$date.x, "%Y")))
 
 
 
