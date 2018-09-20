@@ -10,9 +10,8 @@ head(Achi_mill_PAN); unique(Achi_mill_PAN$dominUnify)
 domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors = F)
 # t.per <- c(0.001,0.01,0.03,0.05,0.1,0.25,0.33,0.50,0.75,0.95,0.99) these are the cutpoints used in Pescott et al. 2016
 
-###########################################
-## Notes about what types of information we need for the model to work (taken from "Data list" below)
-###########################################
+
+## Required data 1
 #N = N # the total number of plots
 #Y = Y # the total number of years
 #n.Plot.pos = n.Plot.pos # the total number of positive cover observations across all plot visits (= samples in NPMS database terms)
@@ -21,12 +20,11 @@ domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors =
 #cpos.Latent = cpos.Latent # just NA values for latent observations
 #lims = lims # the limits to the intervals used for censoring (again, these should be stable unless data collected under different schemes are combined)
 
-###########################################
-## Process example data for JAGS
-###########################################
 ## 1. Achillea millefolium in grassland samples
-N <- unique(Achi_mill_PAN$plot_id)
+uniPlots <- unique(Achi_mill_PAN$plot_id) # unique plot IDs
+N <- length(uniPlots)
 Y <- length(unique(format(Achi_mill_PAN$date.x, "%Y")))
+Achi_mill_PAN$year <- format(Achi_mill_PAN$date.x, "%Y")
 n.Plot.pos <- length(Achi_mill_PAN$dominUnify[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify)]) # 300
 cpos.Cens <- rep(1, n.Plot.pos)
 cpos.Latent <- rep(NA, n.Plot.pos)
@@ -52,24 +50,42 @@ spPos <- merge(spPos, tdf, by.x = "dominUnify", by.y = "int", all.x = T, all.y =
 ## what about missing values?
 lims <- spPos[,19:20] # has the intervals for all points
 
-## Other required data
+## Required data 2
 #plot = plot # an indicator linking a percentage cover observation to its parent (spatially unique) plot
 #year = year # an indicator linking a percentage cover observation to its parent year
 #V2 = V2 # the total number if visits (samples), irrespective of whether there is a postive cover for a species or not
 #plotZ = plotZ # an indicator linking a visit to its parent (spatially unique) plot
 #yearZ = yearZ # an indicator linking a visit to its parent year
 #x = x # visit-level detection history (binary)
+plot <- match(spPos$plot_id, Achi_mill_PAN$plot_id) # an indicator linking a percentage cover observation to its parent (spatially unique) plot
+#yDat <- data.frame(index = 1:length(unique(format(Achi_mill_PAN$date.x, "%Y"))), year = unique(format(Achi_mill_PAN$date.x, "%Y"))) # not really needed
+spPos$year <- as.factor(spPos$year)
+levels(spPos$year) <- 1:length(unique(format(Achi_mill_PAN$date.x, "%Y")))
+year <- spPos$year # an indicator linking a percentage cover observation to its parent year
+V2 <- nrow(Achi_mill_PAN) # the total number if visits (samples), irrespective of whether there is a positive cover for a species or not
+plotZ <- match(Achi_mill_PAN$plot_id, uniPlots)  # an indicator linking a visit to its parent (spatially unique) plot
+Achi_mill_PAN$year <- as.factor(Achi_mill_PAN$year)
+levels(Achi_mill_PAN$year) <- 1:length(unique(format(Achi_mill_PAN$date.x, "%Y")))
+yearZ <- Achi_mill_PAN$year # an indicator linking a visit to its parent year
+x <- x1 <-  numeric()
+for (i in 1:nrow(Achi_mill_PAN)) {
+  if(is.na(Achi_mill_PAN$dominUnify[i])){ 
+    x <- NA
+    #print(c(i,x))
+  } else if (Achi_mill_PAN$dominUnify[i]==0) { 
+    x <- 0
+    #print(c(i,x))
+  } else {
+    x <- 1
+    #print(c(i,x))
+  }
+  x1 <- c(x1,x)
+}
+x <- x1 # visit-level detection history (binary)
 
-plot = plot # an indicator linking a percentage cover observation to its parent (spatially unique) plot
-year = year # an indicator linking a percentage cover observation to its parent year
-V2 = V2 # the total number if visits (samples), irrespective of whether there is a postive cover for a species or not
-plotZ = plotZ # an indicator linking a visit to its parent (spatially unique) plot
-yearZ = yearZ # an indicator linking a visit to its parent year
-x = x # visit-level detection history (binary)
-
-###########################################
+####################
 ## Send data to JAGS
-###########################################
+####################
 # Data list for passing to JAGS
 Data <- list(N = N,
              Y = Y,
