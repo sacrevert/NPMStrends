@@ -6,7 +6,7 @@ rm(list=ls())
 library(R2jags)
 ######################################
 
-load(file = "data/Achi_mille_grassSamples_20180917.Rdata")
+load(file = "data/Achi_mille_grassSamples_20180920.Rdata")
 head(Achi_mill_PAN); unique(Achi_mill_PAN$dominUnify)
 
 # domin things
@@ -35,8 +35,7 @@ Y <- length(unique(format(Achi_mill_PAN$date.x, "%Y")))
 n.Plot.pos <- length(Achi_mill_PAN$dominUnify[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify)]) # 300
 cpos.Cens <- rep(1, n.Plot.pos)
 cpos.Latent <- rep(NA, n.Plot.pos)
-t <- c(1e-16, 0.001, 
-       0.001, 0.01,
+t <- c(1e-16, 0.01,
        0.01, 0.03,
        0.03, 0.05,
        0.05, 0.1,
@@ -46,14 +45,13 @@ t <- c(1e-16, 0.001,
        0.5, 0.75,
        0.75, 0.95, 
        0.95, 0.9999999999999999)
-t = matrix(t, nrow = 11, ncol = 2, byrow = TRUE)
+t = matrix(t, nrow = 10, ncol = 2, byrow = TRUE)
 tdf <- as.data.frame(t)
 colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
-tdf$int <- c(1,2,3,4,5,6,7,8,9,10,11)
+tdf$int <- c(1,2,3,4,5,6,7,8,9,10)
 # positive rows only
 spPos <- Achi_mill_PAN[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify),]
-spPos$dominUnifyAdj <- spPos$dominUnify + 1
-spPos <- merge(spPos, tdf, by.x = "dominUnifyAdj", by.y = "int", all.x = T, all.y = F)
+spPos <- merge(spPos, tdf, by.x = "dominUnify", by.y = "int", all.x = T, all.y = F)
 lims <- spPos[,c("L","U")] # has the lower/upper cutpoints for all intervals
 
 ## Required data 2
@@ -129,7 +127,7 @@ inits.fn <- function() list(z = zinit,
                             gamma0 = rnorm(1,0,1),
                             # cpos.Latent is approx. mid-points of the categories, used as initial values (dominUnif)
                             # intervals start from 1 (midpoint for the "zeroth" category not needed for these latent values for positive data)
-                            cpos.Latent = c(1e-7,0.005,0.025,0.04,0.075,0.175,0.29,0.375,0.625,0.85,0.975)[spPos$dominUnifyAdj]
+                            cpos.Latent = c(0.001,0.025,0.04,0.075,0.175,0.29,0.375,0.625,0.85,0.975)[spPos$dominUnify]
 )
 
 ######################################
