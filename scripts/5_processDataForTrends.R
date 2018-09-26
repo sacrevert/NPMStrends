@@ -129,6 +129,8 @@ inits.fn <- function() list(z = zinit,
                             # intervals start from 1 (midpoint for the "zeroth" category not needed for these latent values for positive data)
                             cpos.Latent = c(0.001,0.025,0.04,0.075,0.175,0.29,0.375,0.625,0.85,0.975)[spPos$dominUnify]
 )
+#for ref only
+cPos.Init <- c(0.001,0.025,0.04,0.075,0.175,0.29,0.375,0.625,0.85,0.975)[spPos$dominUnify]
 
 ######################################
 ## JAGS model
