@@ -2,7 +2,10 @@
 # We also need to bring in the fact that some plots have no information (NAs, i.e. some plots are visited because of the habitat/level we never
 # have any certain information for them)
 #
-# Need to investigate, but it is likely that this will break the model (at least in the absence of covariate information with which to impute state)
+# NAs across actual abundances and corresponding occupancies don't make any difference,
+# nor does it matter if one is missing and not the other
+# nor does it matter is one visit or year information is missing
+# only important thing is if information is contradictory (e.g. detected by zero abundance)
 #
 # O.L. Pescott
 # 12.09.2018
@@ -27,8 +30,8 @@ logit <- function(x){ # logit function
 ######################################
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
-J <- 10 # number of visits to a plot within a year (assume constant for the moment)
-psi <- 0.5 # true occupancy (average)
+J <- 2 # number of visits to a plot within a year (assume constant for the moment)
+psi <- 0.7 # true occupancy (average)
 Y <- 3 # total number of years of monitoring covered by the data
 mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
 phi <- 3      #parameter for 'precision' of cover distribution # 3
@@ -56,6 +59,15 @@ for(k in 1:Y){
   }
 }
 y.array[which(x.array==0)] <- 0 # if the plant was not actually detected, then set the recorded cover to zero as well
+
+## introduce some plots that are always NA (this mirrors in the real world situation for the NPMS where there are some plots that might end up being NA
+# at least in the short term)
+# replace the last plot (N = 100) with NAs in all reps and years
+#y.array[(N-10):N, 1:J, 1:Y] <- NA
+#x.array[(N-10):N, 1:J, 1:Y] <- NA
+y.array[(N-10):N, J, 1:Y] <- NA
+x.array[(N-10):N, J, 1:Y] <- NA
+
 ###################################### END OF SIMS
 
 ##################################################
@@ -196,12 +208,12 @@ sink()
 
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.1_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
-para.names <- c('mu.C', 'tau.C', 'gamma0')
-#para.names <- c('psi')
-#mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
-#mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
+#para.names <- c('mu.C', 'tau.C', 'gamma0')
+para.names <- c('psi')
 # Continue the MCMC runs with sampling
 samples <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
+mean(summary(samples)$quantiles[1:100,3]) # mean occupancy (simulated psi value)
+mean(summary(samples)$statistics[1:100,1]) # mean occupancy (simulated psi value)
 ## Inspect results
 plot(samples)
 summary(samples)
