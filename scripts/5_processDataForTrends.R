@@ -7,7 +7,7 @@ library(R2jags)
 ######################################
 
 load(file = "data/Achi_mille_grassSamples_20180920.Rdata")
-head(Achi_mill_PAN); unique(Achi_mill_PAN$dominUnify)
+head(Achi_mill_PAN); tail(Achi_mill_PAN); unique(Achi_mill_PAN$dominUnify)
 
 # domin things
 domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors = F)
@@ -17,10 +17,10 @@ domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors =
 #N = N # the total number of plots
 #Y = Y # the total number of years
 #n.Plot.pos = n.Plot.pos # the total number of positive cover observations across all plot visits (= samples in NPMS database terms)
-#cpos.Cens = cpos.Cens # indicator (is censored?) -- can be T/F or 1/0, doesn't matter as long as there is a binary interpretation
-## note that for the NPMS all observations are censored; this might not be true though if we combined with CS data or similar with more "accurate" cover data
-#cpos.Latent = cpos.Latent # just NA values for latent observations
-#lims = lims # the limits to the intervals used for censoring (again, these should be stable unless data collected under different schemes are combined)
+#cpos.Cens = cpos.Cens # indicator (is censored?) -- can be T/F or 1/0, doesn't matter as long as is.logical(cpos.Cens) == T
+## note that for the NPMS all non-zero observations are censored; this might not be true though if we combined with CS data or similar with more "precise" cover data
+#cpos.Latent = cpos.Latent # just NA values for latent observations (unknown value underlying censored observation)
+#lims = lims # the limits to the intervals used for censoring (again, these should be of one type only, unless data collected under different schemes are combined) -- see Pescott et al. (2016)
 
 ## 1. Achillea millefolium in grassland samples
 # not sure it really matters, but sorting the data by year and then plot first may simplify downstream things

@@ -4,7 +4,7 @@
 #
 # NAs across actual abundances and corresponding occupancies don't make any difference,
 # nor does it matter if one is missing and not the other
-# nor does it matter is one visit or year information is missing
+# nor does it matter if one visit or year information is missing
 # only important thing is if information is contradictory (e.g. detected by zero abundance)
 #
 # O.L. Pescott
@@ -26,27 +26,28 @@ logit <- function(x){ # logit function
 ######################################
 
 ######################################
-# Simulations based on those of Wright et al. 2017
+# Simulations originally based on those of Wright et al. 2017
 ######################################
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
-J <- 2 # number of visits to a plot within a year (assume constant for the moment)
-psi <- 0.7 # true occupancy (average)
-Y <- 3 # total number of years of monitoring covered by the data
-mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
-phi <- 3      #parameter for 'precision' of cover distribution # 3
-gamma0 <- -1   #intercept for detection logistic regression # -1.5
-gamma1 <- 1   #slope for detection with %cover # 2
+J <- 5 # number of visits to a plot within a year (assume constant for the moment)
+psi <- 0.7 # true occupancy across plots (average)
+Y <- 3 # total number of years of monitoring covered by the simulated data
+mu <- 0.999      # parameter for mean of cover beta distribution (i.e. mean conditional on presence) # 0.25
+phi <- 3      # parameter for 'precision' of cover distribution (i.e. variance conditional on presence) # 3
+gamma0 <- -1   # intercept for detection logistic regression # -1.5
+gamma1 <- 1   # slope for detection with %cover # 2
 
 # array of plot covers per visit per year
-y.array <- array(dim = c(N, J, Y))
+# array dimensions = "rows, columns, number of 'list' items" 
+y.array <- array(dim = c(N, J, Y)) # equivalent to a Y item list, with each item having J columns and N rows
 for(k in 1:Y){
       y.array[,,k] <- matrix(rbinom(N*J, 1, psi)*rbeta(N*J, mu*phi, (1-mu)*phi), 
-                                 nrow=N, ncol=J)
+                                 nrow=N, ncol=J) # generate 'truth'
 }
 # make a detection history matrix based on cover data
 x.array <- array(dim = c(N, J, Y))
-for(k in 1:Y){
+for(k in 1:Y){ # loop through every element of y.array
   for(i in 1:N){
     for(j in 1:J){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
@@ -68,7 +69,7 @@ y.array[which(x.array==0)] <- 0 # if the plant was not actually detected, then s
 y.array[(N-10):N, J, 1:Y] <- NA
 x.array[(N-10):N, J, 1:Y] <- NA
 
-###################################### END OF SIMS
+###################################### END OF DATA SIM ####
 
 ##################################################
 ## Data/indicators required for running JAGS model
@@ -79,20 +80,20 @@ cpos[,1] <- as.vector(y.array)[which(as.vector(y.array) > 0)] # actual cover val
 cpos[,2] <- 1 # indicator stating the observation censored
 cpos[,3] <- NA # NA values for latent variable
 # code borrowed from Pescott et al. 2016 Power paper:
-t <- c(1e-16,0.05,
+t <- c(1e-16,0.05, # boundaries of Domin scale used in NPMS
        0.05,0.25,
        0.25,0.5,
        0.5,0.75,
        0.75,0.95,
        0.95,0.9999999999999999)
-t = matrix(t, nrow = 6, ncol = 2, byrow = TRUE)
+t = matrix(t, nrow = 6, ncol = 2, byrow = TRUE) # turn into a matrix and then data frame
 tdf <- as.data.frame(t)
 colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
-intervals <- c(1,2,3,4,5,6)
-tdf$int <- intervals
+tdf$int <- c(1,2,3,4,5,6) # interval labels
+
 # library(plyr) for SQL join function (like merge but keeps order) -- although actually could use merge with sort = F
 tInt <- c(1e-16,0.05,0.25,0.5,0.75,0.95,0.9999999999999999)
-int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points
+int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points (base::findInterval)
 int <- as.data.frame(int)
 m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point
 lims <- m1[,2:3] # has the intervals for all points
@@ -106,7 +107,7 @@ out <- out1 <-  numeric()
 for(k in 1:Y){
   for(j in 1:J){
     for(i in 1:N){
-    out <- ifelse(y.array[i, j, k] > 0, i, NA)
+    out <- ifelse(y.array[i, j, k] > 0, i, NA) # i is plot index
     out1 <- c(out1, out)
     }
   }
@@ -117,7 +118,7 @@ out <- out1 <-  numeric()
 for(k in 1:Y){
   for(j in 1:J){
     for(i in 1:N){
-    out <- ifelse(y.array[i, j, k] > 0, k, NA)
+    out <- ifelse(y.array[i, j, k] > 0, k, NA) # k is year index
     out1 <- c(out1, out)
     }
   }
@@ -130,7 +131,7 @@ year <- out1[!is.na(out1)]
 V2 <- N*J*Y # total number of plot visits (# plots x # visits x # years)
 # indicator linking every visit x to plot; length = V2 
 plotZ <- rep(1:N, J*Y)
-# indicator linking every visit x to year; length V2 
+# indicator linking every visit x to year; length = V2 
 yearZ <- rep(1:Y, each = N*J)
 x <- as.vector(x.array) # detection indicator for every visit (length V2)
 
@@ -155,7 +156,7 @@ Data <- list(N = N,
 ###########################################
 # Initial parameter values for JAGS
 # To ensure conformity with the data all occupancies (ZI.*) are set to one
-# Some other parameters are also fixed to avoid extemly small likelihoods
+# Some other parameters are also fixed to avoid extremely small likelihoods
 # but these can probably be relaxed a bit more.
 zinit <- matrix(1, nrow = N, ncol = Y)
 inits.fn <- function() list(z = zinit,
@@ -209,7 +210,7 @@ sink()
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.1_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
 #para.names <- c('mu.C', 'tau.C', 'gamma0')
-para.names <- c('psi')
+para.names <- c('psi', 'gamma1')
 # Continue the MCMC runs with sampling
 samples <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
 mean(summary(samples)$quantiles[1:100,3]) # mean occupancy (simulated psi value)
