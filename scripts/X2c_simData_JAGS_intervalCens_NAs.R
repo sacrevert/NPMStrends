@@ -59,6 +59,7 @@ for(k in 1:Y){ # loop through every element of y.array
     }
   }
 }
+y.arrayOrig <- y.array # keep original covers
 y.array[which(x.array==0)] <- 0 # if the plant was not actually detected, then set the recorded cover to zero as well
 
 ## introduce some plots that are always NA (this mirrors in the real world situation for the NPMS where there are some plots that might end up being NA
@@ -134,6 +135,7 @@ plotZ <- rep(1:N, J*Y)
 # indicator linking every visit x to year; length = V2 
 yearZ <- rep(1:Y, each = N*J)
 x <- as.vector(x.array) # detection indicator for every visit (length V2)
+y <- as.vector(y.arrayOrig) # original covers used in detectability loop (inc. zeros) for every visit (length V2)
 
 # Data list for passing to JAGS
 Data <- list(N = N,
@@ -148,7 +150,8 @@ Data <- list(N = N,
             V2 = V2,
             plotZ = plotZ,
             yearZ = yearZ,
-            x = x)
+            x = x,
+            yOrig = y)
 ###################################### END OF DATA PREP
 
 ###########################################
@@ -195,11 +198,13 @@ for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
     p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
-    logit(p.Dec[a]) <- gamma0 ## + covars on detectability
+    logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
   }
 
 ## Priors!
-gamma0 ~ dt(0, 0.01, 1)
+#gamma0 ~ dt(0, 0.01, 1)
+gamma0 ~ dnorm(0, 1)
+gamma1 ~ dnorm(0, 1)
 mu.C ~ dunif(0, 1)
 tau.C ~ dt(0, 0.01, 1)T(0,)
 

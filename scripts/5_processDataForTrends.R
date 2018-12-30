@@ -7,10 +7,12 @@ library(R2jags)
 ######################################
 
 load(file = "data/Achi_mille_grassSamples_20180920.Rdata")
+#load("W:/PYWELL_SHARED/Pywell Projects/BRC/_BRC_projects/NPMS/Analyses/2018 08 - Per species trend analyses/r_proj/NPMStrends/data/Achi_mille_grassSamples_20180920.Rdata")
 head(Achi_mill_PAN); tail(Achi_mill_PAN); unique(Achi_mill_PAN$dominUnify)
 
 # domin things
 domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors = F)
+#domins <- read.csv("W:/PYWELL_SHARED/Pywell Projects/BRC/_BRC_projects/NPMS/Analyses/2018 08 - Per species trend analyses/r_proj/NPMStrends/data/dominScores.csv", header = T, stringsAsFactors = F)
 # t.per <- c(0.001,0.01,0.03,0.05,0.1,0.25,0.33,0.50,0.75,0.95,0.99) these are the cutpoints used in Pescott et al. 2016
 
 ## Required data 1
@@ -174,6 +176,10 @@ cat("
 sink()
 
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.2_NPMS.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
+#  Error in node cpos.Cens[1]
+# Node inconsistent with parents
+
+
 # Specify parameters for which posterior samples are saved
 para.names <- c('mu.C', 'tau.C', 'gamma0')
 # Continue the MCMC runs with sampling

@@ -31,12 +31,15 @@ logit <- function(x){ # logit function
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
 J <- 10 # number of visits to a plot within a year (assume constant for the moment)
-psi <- 0.5 # true occupancy (average)
-Y <- 3 # total number of years of monitoring covered by the data
-mu <- 0.25       #parameter for mean of cover beta distribution # 0.25
-phi <- 3      #parameter for 'precision' of cover distribution # 3
-gamma0 <- -1   #intercept for detection logistic regression # -1.5
-gamma1 <- 1   #slope for detection with %cover # 2
+#psi <- 0.5 # true occupancy (average)
+psi <- 1 # should be easier for model to retrieve true values of gamma0 and gamma1 if occupancy is 1 -- this appears to be true
+Y <- 1 # total number of years of monitoring covered by the data
+mu <- 0.5       # parameter for mean of cover beta distribution # 0.25
+phi <- 10      # parameter for 'precision' of cover distribution # 3
+gamma0 <- -2   # intercept for detection logistic regression # -1.5
+gamma1 <- 3   # slope for detection with %cover # 2
+# e.g. plogis(-2 + 3*cover) makes for greater detectability range based on covers
+# if you do this but only estimate gamma0 in the model, then biases in gamma0 and mu.C estimates increase
 
 # array of plot covers per visit per year
 y.array <- array(dim = c(N, J, Y))
@@ -53,11 +56,14 @@ for(k in 1:Y){
                                  rbinom(1, 1, 
                                         #plogis(gamma0 + y.array[i, j, k])), # detection function 1
                                         plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
-                                 #1, # for testing
+                                 #1, # for testing: if you remove probabilistic element, then mu.C better estimated
+                                 # if you make detection perfect, then gamma0 and gamma1 estiamted as ~4.5 and 2
+                                 # which means that plogis(4.5 + 2*0.01) and plogis(4.5 + 2*0.99) both = ~1.00 
                                  0)
     }
   }
 }
+y.arrayOrig <- y.array # keep original covers
 y.array[which(x.array==0)] <- 0 # if the plant was not actually detected, then set the recorded cover to zero as well
 ###################################### END OF SIMS
 
@@ -70,19 +76,19 @@ cpos[,1] <- as.vector(y.array)[which(as.vector(y.array) > 0)] # actual cover val
 cpos[,2] <- 1 # indicator stating the observation censored
 cpos[,3] <- NA # NA values for latent variable
 # code borrowed from Pescott et al. 2016 Power paper:
-t <- c(1e-16,0.05,
+t <- c(1e-3,0.05,
        0.05,0.25,
        0.25,0.5,
        0.5,0.75,
        0.75,0.95,
-       0.95,0.9999999999999999)
+       0.95,0.999)
 t = matrix(t, nrow = 6, ncol = 2, byrow = TRUE)
 tdf <- as.data.frame(t)
 colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
 intervals <- c(1,2,3,4,5,6)
 tdf$int <- intervals
 # library(plyr) for SQL join function (like merge but keeps order) -- although actually could use merge with sort = F
-tInt <- c(1e-16,0.05,0.25,0.5,0.75,0.95,0.9999999999999999)
+tInt <- c(1e-3,0.05,0.25,0.5,0.75,0.95,0.999)
 int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points
 int <- as.data.frame(int)
 m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point
@@ -124,6 +130,8 @@ plotZ <- rep(1:N, J*Y)
 # indicator linking every visit x to year; length V2 
 yearZ <- rep(1:Y, each = N*J)
 x <- as.vector(x.array) # detection indicator for every visit (length V2)
+# covers for all visits
+y <- as.vector(y.arrayOrig) # original covers used in detectability loop (inc. zeros) for every visit (length V2)
 
 # Data list for passing to JAGS
 Data <- list(N = N,
@@ -138,7 +146,8 @@ Data <- list(N = N,
             V2 = V2,
             plotZ = plotZ,
             yearZ = yearZ,
-            x = x)
+            x = x,
+            yOrig = y)
 ###################################### END OF DATA PREP
 
 ###########################################
@@ -150,9 +159,10 @@ Data <- list(N = N,
 # but these can probably be relaxed a bit more.
 zinit <- matrix(1, nrow = N, ncol = Y)
 inits.fn <- function() list(z = zinit,
-                            tau.C = runif(1,1,5),
+                            tau.C = runif(1,1,10),
                             mu.C = 0.5,
                             gamma0 = rnorm(1,0,1),
+                            gamma1 = rnorm(1,0,1),
                             cpos.Latent = c(0.025,0.15,0.375,0.625,0.85,0.975)[check$int]
                             )
 
@@ -168,7 +178,7 @@ for (i in 1:N){ # N is the number of plots
     C.S[i,j] <- z[i,j] * c.Pos[i,j] # cover including zeros
     z[i,j] ~ dbern(psi[i,j]) ## true PA state of a plot within a year depends on occupancy probability psi
     psi[i,j] ~ dunif(0,1)
-    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-16,0.9999999999999999)
+    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-3,0.999)
     a.C[i,j] <- mu.C * tau.C
     b.C[i,j] <- (1 - mu.C) * tau.C
     } # end of years loop
@@ -177,19 +187,21 @@ for (i in 1:N){ # N is the number of plots
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
     cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
-    cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
+    cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-3,0.999) # recorded cover when present follows beta distribution
   }
 
 ## Observation model for all plot visits ([within-year] detection within plots)
 for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
-    p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
-    logit(p.Dec[a]) <- gamma0 ## + covars on detectability
+    p.dec[a] <- min(max(1e-3, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
+    logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
   }
 
 ## Priors!
-gamma0 ~ dt(0, 0.01, 1)
+#gamma0 ~ dt(0, 0.01, 1)
+gamma0 ~ dnorm(0, 1)
+gamma1 ~ dnorm(0, 1)
 mu.C ~ dunif(0, 1)
 tau.C ~ dt(0, 0.01, 1)T(0,)
 
@@ -199,7 +211,8 @@ sink()
 
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.1_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
-para.names <- c('mu.C', 'tau.C', 'gamma0')
+#para.names <- c('mu.C', 'tau.C', 'gamma0')
+para.names <- c('mu.C', 'tau.C', 'gamma0', 'gamma1')
 #para.names <- c('psi')
 #mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
 #mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
