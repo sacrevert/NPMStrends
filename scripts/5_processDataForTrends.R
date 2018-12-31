@@ -1,6 +1,7 @@
 ## 5. Adapt data and model for NPMS data
+# now works for Achillea millefolium example
 # O.L. Pescott
-# 17.09.2018
+# 17.09.2018, fixed 31.12.2018
 rm(list=ls())
 ######################################
 library(R2jags)
@@ -28,16 +29,28 @@ domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors =
 # not sure it really matters, but sorting the data by year and then plot first may simplify downstream things
 Achi_mill_PAN$year <- format(Achi_mill_PAN$date.x, "%Y")
 Achi_mill_PAN <- Achi_mill_PAN[order(Achi_mill_PAN$year, Achi_mill_PAN$plot_id), ]
-uniPlots <- unique(Achi_mill_PAN$plot_id) # unique plot IDs
+uniPlots <- unique(Achi_mill_PAN$plot_id) # unique plot IDs - 31/12/2018 = 933
 # create unique plot index (useful for cross-referencing later on?)
 plotIndex <- data.frame(plot = uniPlots, index = 1:length(uniPlots))
 N <- length(uniPlots)
+# check that all years are in the range of 2015:System time
+if ( max(unique(format(Achi_mill_PAN$date.x, "%Y"))) > format(Sys.time(), "%Y") ) {
+    print ("error")
+} else {
+    print("OK")
+}
+# 
 Y <- length(unique(format(Achi_mill_PAN$date.x, "%Y")))
 
 n.Plot.pos <- length(Achi_mill_PAN$dominUnify[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify)]) # 300
+## checks on n.Plot.pos
+head(Achi_mill_PAN[!is.na(Achi_mill_PAN$dominUnify) & Achi_mill_PAN$dominUnify !='0',]) # data frame
+head(Achi_mill_PAN$dominUnify[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify)]) # vector
+## looks OK
+
 cpos.Cens <- rep(1, n.Plot.pos)
 cpos.Latent <- rep(NA, n.Plot.pos)
-t <- c(1e-16, 0.01,
+t <- c(1e-4, 0.01,
        0.01, 0.03,
        0.03, 0.05,
        0.05, 0.1,
@@ -46,14 +59,18 @@ t <- c(1e-16, 0.01,
        0.33, 0.5,
        0.5, 0.75,
        0.75, 0.95, 
-       0.95, 0.9999999999999999)
+       0.95, 0.9999)
 t = matrix(t, nrow = 10, ncol = 2, byrow = TRUE)
 tdf <- as.data.frame(t)
 colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
 tdf$int <- c(1,2,3,4,5,6,7,8,9,10)
+
 # positive rows only
 spPos <- Achi_mill_PAN[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify),]
+# add row number to allow resorting after merge (merge with sort = F does not actually do what we want, could also used plyer::join)
+spPos$indexPos <- 1:nrow(spPos) 
 spPos <- merge(spPos, tdf, by.x = "dominUnify", by.y = "int", all.x = T, all.y = F)
+spPos <- spPos[order(spPos$indexPos),]
 lims <- spPos[,c("L","U")] # has the lower/upper cutpoints for all intervals
 
 ## Required data 2
@@ -66,7 +83,7 @@ lims <- spPos[,c("L","U")] # has the lower/upper cutpoints for all intervals
 
 #plot <- match(spPos$plot_id, Achi_mill_PAN$plot_id) # an indicator linking a percentage cover observation to its parent (spatially unique) plot
 spPos <- merge(spPos, plotIndex, by.x = "plot_id", by.y = "plot", all.x = T, all.y = F)
-spPos <- spPos[order(spPos$year, spPos$index),]
+spPos <- spPos[order(spPos$indexPos),]
 plot <- spPos$index
 #yDat <- data.frame(index = 1:length(unique(format(Achi_mill_PAN$date.x, "%Y"))), year = unique(format(Achi_mill_PAN$date.x, "%Y"))) # not really needed
 spPos$year <- as.factor(spPos$year)
@@ -146,7 +163,7 @@ cat("
         C.S[i,j] <- z[i,j] * c.Pos[i,j] # cover including zeros
         z[i,j] ~ dbern(psi[i,j]) # true PA state of a plot within a year depends on occupancy probability psi
         psi[i,j] ~ dunif(0,1)
-        c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-16,0.9999999999999999)
+        c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-4,0.9999)
         a.C[i,j] <- mu.C * tau.C
         b.C[i,j] <- (1 - mu.C) * tau.C
       } # end of years loop
@@ -155,14 +172,14 @@ cat("
     ## Plot positive covers
     for(k in 1:n.Plot.pos){ 
       cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
-      cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
+      cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-4,0.9999) # recorded cover when present follows beta distribution
     }
     
     ## Observation model for all plot visits ([within-year] detection within plots)
     for (a in 1:V2){
       x[a] ~ dbern(py[a]) # detectability influences detection
       py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
-      p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
+      p.dec[a] <- min(max(1e-4, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
       logit(p.Dec[a]) <- gamma0 ## + covars on detectability
     }
     
@@ -176,9 +193,6 @@ cat("
 sink()
 
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.2_NPMS.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
-#  Error in node cpos.Cens[1]
-# Node inconsistent with parents
-
 
 # Specify parameters for which posterior samples are saved
 para.names <- c('mu.C', 'tau.C', 'gamma0')
