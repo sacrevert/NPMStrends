@@ -6,7 +6,7 @@ for (i in 1:N){ # N is the number of plots
     C.S[i,j] <- z[i,j] * c.Pos[i,j] # cover including zeros
     z[i,j] ~ dbern(psi[i,j]) ## true PA state of a plot within a year depends on occupancy probability psi
     psi[i,j] ~ dunif(0,1)
-    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-3,0.999)
+    c.Pos[i,j] ~ dbeta(a.C[,j], b.C[,j]) T(1e-3,0.999)
     a.C[i,j] <- mu.C * tau.C
     b.C[i,j] <- (1 - mu.C) * tau.C
     } # end of years loop
@@ -15,7 +15,7 @@ for (i in 1:N){ # N is the number of plots
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
     cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
-    cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-3,0.999) # recorded cover when present follows beta distribution
+    cpos.Latent[k] ~ dbeta(a.C[, year[k]], b.C[, year[k]]) T(1e-3,0.999) # recorded cover when present follows beta distribution
   }
 
 ## Observation model for all plot visits ([within-year] detection within plots)
@@ -24,10 +24,7 @@ for (a in 1:V2){
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
     p.dec[a] <- min(max(1e-3, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
     logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
-}
-
-## Derived values
-#cPosAn[] <- mean(c.Pos[,j])
+  }
 
 ## Priors!
 gamma0 ~ dt(0, 0.01, 1)

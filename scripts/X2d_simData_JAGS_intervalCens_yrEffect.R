@@ -1,5 +1,7 @@
-## X2b. Simulation of the types of data that we are going to be modelling, using JAGS initially
-# Now with interval censoring!
+## X2d. Simulation of the types of data that we are going to be modelling, using JAGS initially
+# Now with interval censoring! (2c)
+# Version 2d -- investigation as to the year effects (e.g. plotting)
+# currently there are no changes to the Bayesian model (as compared to versions X2b and X2c)
 #
 # note that this model only uses an observation/detection model for the repeat visits within a year, not for the cover data
 # whilst it is reasonable to assume that the occupancy state is stable within years (obviously this is not 100% true all the time, but is reasonable)
@@ -8,7 +10,7 @@
 # observations and are included in the "state model" as such
 #
 # O.L. Pescott
-# 12.09.2018
+# 09.01.2019
 #rm(list=ls())
 
 ######################################
@@ -28,17 +30,31 @@ logit <- function(x){ # logit function
 ######################################
 # Simulations based on those of Wright et al. 2017
 ######################################
+## Good estimates of gamma0, gamma1, mu.C and tau.C with N = 100, J = 10, psi = 1, Y = 10, mu = 0.5, phi = 10, gamma0 = -2, gamma1 = 3
+#         Mean       SD  Naive SE Time-series SE
+#gamma0 -1.980 0.069046 0.0017827      0.0085523
+#gamma1  2.969 0.129425 0.0033417      0.0167760
+#mu.C    0.536 0.002886 0.0000745      0.0001088
+#tau.C  10.216 0.292774 0.0075594      0.0176602
+
+#          2.5%     25%    50%     75%   97.5%
+#gamma0 -2.1147 -2.0277 -1.982 -1.9311 -1.8434
+#gamma1  2.7112  2.8822  2.974  3.0578  3.2175
+#mu.C    0.5303  0.5339  0.536  0.5381  0.5414
+#tau.C   9.6300 10.0310 10.221 10.3986 10.7998
+
+
 ## Could put this in a simulation function (see Wright et al. 2017)
-N <- 100 # number of spatially unique plots
-J <- 10 # number of visits to a plot within a year (assume constant for the moment)
+N <- 50 # number of spatially unique plots
+J <- 5 # number of visits to a plot within a year (assume constant for the moment)
 #psi <- 0.5 # true occupancy (average)
 psi <- 1 # should be easier for model to retrieve true values of gamma0 and gamma1 if occupancy is 1 -- this appears to be true
-Y <- 1 # total number of years of monitoring covered by the data
+Y <- 2 # total number of years of monitoring covered by the data
 mu <- 0.5       # parameter for mean of cover beta distribution # 0.25
 phi <- 10      # parameter for 'precision' of cover distribution # 3
 gamma0 <- -2   # intercept for detection logistic regression # -1.5
 gamma1 <- 3   # slope for detection with %cover # 2
-# e.g. plogis(-2 + 3*cover) makes for greater detectability range based on covers
+# e.g. plogis(-2 + 3*cover) makes for greater detectability range based on percent covers
 # if you do this but only estimate gamma0 in the model, then biases in gamma0 and mu.C estimates increase
 
 # array of plot covers per visit per year
@@ -91,7 +107,7 @@ tdf$int <- intervals
 tInt <- c(1e-3,0.05,0.25,0.5,0.75,0.95,0.999)
 int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points
 int <- as.data.frame(int)
-m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point
+m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point (although merge resorts, need to add row index to resort on)
 lims <- m1[,2:3] # has the intervals for all points
 check <- cbind(cpos, m1); head(check); tail(check) # just for quick visual check that all is well
 cpos.Cens <- rep(1, nrow(cpos))
@@ -169,7 +185,7 @@ inits.fn <- function() list(z = zinit,
 ######################################
 ## JAGS model
 ######################################
-sink('scripts/JAGS/JAGS_v0.1_cens.txt')
+sink('scripts/JAGS/JAGS_vX2d_cens.txt')
 cat("
 model{
 ## State model
@@ -182,21 +198,30 @@ for (i in 1:N){ # N is the number of plots
     a.C[i,j] <- mu.C * tau.C
     b.C[i,j] <- (1 - mu.C) * tau.C
     } # end of years loop
-  } # end of plot loop
+} # end of plot loop
+
+    
+## Derived values from state model above (average value of c.Pos, psi and C.S per year)
+for (j in 1:Y){ # number of years
+  cPosAn[1,j] <- mean(c.Pos[1:N,j]) # mean across C.Pos per year, etc.
+  psiAn[1,j] <- mean(psi[1:N,j])
+  cSAn[1,j] <- mean(C.S[1:N,j])
+}
 
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
     cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
     cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-3,0.999) # recorded cover when present follows beta distribution
-  }
+}
 
 ## Observation model for all plot visits ([within-year] detection within plots)
 for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
-    p.dec[a] <- min(max(1e-3, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
-    logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
-  }
+    p.dec[a] <- min(max(1e-3, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this *could* influence covars in detectability regression) -- important?
+    logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection filter)
+}
+
 
 ## Priors!
 gamma0 ~ dt(0, 0.01, 1)
@@ -210,16 +235,16 @@ tau.C ~ dt(0, 0.01, 1)T(0,)
 ", fill = TRUE)
 sink()
 
-jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.1_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
+jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_vX2d_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
 #para.names <- c('mu.C', 'tau.C', 'gamma0')
-para.names <- c('mu.C', 'tau.C', 'gamma0', 'gamma1')
+para.names <- c('cPosAn', 'psiAn', 'cSAn')
 #para.names <- c('psi')
 #mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
 #mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
 # Continue the MCMC runs with sampling
 samples <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
 ## Inspect results
-plot(samples)
 summary(samples)
+plot(samples)
 gelman.diag(samples)

@@ -1,5 +1,5 @@
-## X2b. Simulation of the types of data that we are going to be modelling, using JAGS initially
-# Now with interval censoring!
+## X2e. Possible simplification of beta distribution element
+# So far I have not got this to work -- it is not essential anyway (09.01.2018)
 #
 # note that this model only uses an observation/detection model for the repeat visits within a year, not for the cover data
 # whilst it is reasonable to assume that the occupancy state is stable within years (obviously this is not 100% true all the time, but is reasonable)
@@ -8,7 +8,7 @@
 # observations and are included in the "state model" as such
 #
 # O.L. Pescott
-# 12.09.2018
+# 09.01.2019
 #rm(list=ls())
 
 ######################################
@@ -33,12 +33,12 @@ N <- 100 # number of spatially unique plots
 J <- 10 # number of visits to a plot within a year (assume constant for the moment)
 #psi <- 0.5 # true occupancy (average)
 psi <- 1 # should be easier for model to retrieve true values of gamma0 and gamma1 if occupancy is 1 -- this appears to be true
-Y <- 1 # total number of years of monitoring covered by the data
+Y <- 10 # total number of years of monitoring covered by the data
 mu <- 0.5       # parameter for mean of cover beta distribution # 0.25
 phi <- 10      # parameter for 'precision' of cover distribution # 3
 gamma0 <- -2   # intercept for detection logistic regression # -1.5
 gamma1 <- 3   # slope for detection with %cover # 2
-# e.g. plogis(-2 + 3*cover) makes for greater detectability range based on covers
+# e.g. plogis(-2 + 3*cover) makes for greater detectability range based on percent covers
 # if you do this but only estimate gamma0 in the model, then biases in gamma0 and mu.C estimates increase
 
 # array of plot covers per visit per year
@@ -169,7 +169,7 @@ inits.fn <- function() list(z = zinit,
 ######################################
 ## JAGS model
 ######################################
-sink('scripts/JAGS/JAGS_v0.1_cens.txt')
+sink('scripts/JAGS/JAGS_vX2e_cens.txt')
 cat("
 model{
 ## State model
@@ -185,7 +185,7 @@ for (i in 1:N){ # N is the number of plots
   } # end of plot loop
 
 ## Plot positive covers
-for(k in 1:n.Plot.pos){ 
+for(k in 1:n.Plot.pos){   
     cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
     cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-3,0.999) # recorded cover when present follows beta distribution
   }
@@ -210,7 +210,7 @@ tau.C ~ dt(0, 0.01, 1)T(0,)
 ", fill = TRUE)
 sink()
 
-jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.1_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
+jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_vX2e_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
 #para.names <- c('mu.C', 'tau.C', 'gamma0')
 para.names <- c('mu.C', 'tau.C', 'gamma0', 'gamma1')

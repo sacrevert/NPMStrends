@@ -1,7 +1,7 @@
-## 5. Adapt data and model for NPMS data
-# now works for Achillea millefolium example
-# O.L. Pescott
-# 17.09.2018, fixed 31.12.2018
+########################################################################
+#### 5b. Create functions make multiple runs across species easier.#####
+########################################################################
+# 09.01.2018
 rm(list=ls())
 ######################################
 library(R2jags)
@@ -41,6 +41,8 @@ if ( max(unique(format(Achi_mill_PAN$date.x, "%Y"))) > format(Sys.time(), "%Y") 
 }
 # 
 Y <- length(unique(format(Achi_mill_PAN$date.x, "%Y")))
+# All Domin data, including zeros
+yOrig <- Achi_mill_PAN$dominUnify
 
 n.Plot.pos <- length(Achi_mill_PAN$dominUnify[Achi_mill_PAN$dominUnify !='0' & !is.na(Achi_mill_PAN$dominUnify)]) # 300
 ## checks on n.Plot.pos
@@ -129,7 +131,8 @@ Data <- list(N = N,
              V2 = V2,
              plotZ = plotZ,
              yearZ = yearZ,
-             x = x)
+             x = x,
+             yOrig = yOrig)
 ###################################### END OF DATA PREP
 
 ###########################################
@@ -144,6 +147,7 @@ inits.fn <- function() list(z = zinit,
                             tau.C = runif(1,1,5),
                             mu.C = 0.5,
                             gamma0 = rnorm(1,0,1),
+                            gamma1 = rnorm(1,0,1),
                             # cpos.Latent is approx. mid-points of the categories, used as initial values (dominUnif)
                             # intervals start from 1 (midpoint for the "zeroth" category not needed for these latent values for positive data)
                             cpos.Latent = c(0.001,0.025,0.04,0.075,0.175,0.29,0.375,0.625,0.85,0.975)[spPos$dominUnify]
@@ -168,7 +172,14 @@ cat("
         b.C[i,j] <- (1 - mu.C) * tau.C
       } # end of years loop
     } # end of plot loop
-    
+
+    ## Derived values from state model above (average value of c.Pos, psi and C.S per year)
+    for (j in 1:Y){ # number of years
+      cPosAn[1,j] <- mean(c.Pos[1:N,j]) # mean across C.Pos per year, etc.
+      psiAn[1,j] <- mean(psi[1:N,j])
+      cSAn[1,j] <- mean(C.S[1:N,j])
+    }
+
     ## Plot positive covers
     for(k in 1:n.Plot.pos){ 
       cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
@@ -180,11 +191,15 @@ cat("
       x[a] ~ dbern(py[a]) # detectability influences detection
       py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
       p.dec[a] <- min(max(1e-4, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
-      logit(p.Dec[a]) <- gamma0 ## + covars on detectability
+      ## Can add observed cover (Domin scale) as covar to the following line
+      logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA')
+      #yOrig[a] ~ dt(0, 0.01, 1) # Prior necessary to account for missing data (not sure this is the best distrbution though)
+      yOrig[a] ~ dunif(0,10) # Doesn't seem to make much difference to results
     }
     
     ## Priors!
     gamma0 ~ dt(0, 0.01, 1)
+    gamma1 ~ dt(0, 0.01, 1)
     mu.C ~ dunif(0, 1)
     tau.C ~ dt(0, 0.01, 1)T(0,)
     
@@ -195,10 +210,10 @@ sink()
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.2_NPMS.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 
 # Specify parameters for which posterior samples are saved
-para.names <- c('mu.C', 'tau.C', 'gamma0')
+para.names <- c('mu.C', 'tau.C', 'gamma0', 'gamma1', 'cPosAn', 'psiAn', 'cSAn')
 # Continue the MCMC runs with sampling
 samples <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
 ## Inspect results
-plot(samples)
 summary(samples)
 gelman.diag(samples)
+plot(samples)
