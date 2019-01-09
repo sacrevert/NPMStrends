@@ -2,16 +2,25 @@
 ## prepare Domin data for modelling
 # O.L. Pescott
 # 21.08.2018
-rm(list=ls())
+#rm(list=ls())
 
-# Source file with datasets, getSamples() and spSamplePA() functions
+## Source file with datasets, getSamples() and spSamplePA() functions
+## Might be slow, as script 3_process... itself sources script 2_getDataFrom..., which queries the Indicia database
 source(file = "scripts/3_processDataFuns.R")
 
 ## Grasslands examples
 grasslands <- c("Neutral pastures and meadows", "Dry acid grassland", "Dry calcareous grassland", "Neutral damp grassland", "Lowland grassland")
 grassSamples <- getSamples(habsList = grasslands)
 
+############################
+############################
+## Add general habitats list
+
+############################
 ## Get and process data for species Y
+## Adapt to lapply across list of species in habitat
+############################
+
 Achi_mill_PAN <- spSamplePA(samples = grassSamples, species = "Achillea millefolium")
 head(Achi_mill_PAN); tail(Achi_mill_PAN)
 

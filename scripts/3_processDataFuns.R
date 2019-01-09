@@ -2,11 +2,13 @@
 ## in order to create per species information for modelling
 # O.L. Pescott
 # 17.08.2018
-rm(list=ls())
+#rm(list=ls())
 
+source(file = "scripts/2_getDataFromIndiciaExec.R")
 ## Load data (previously extracted using functions in script 1)
-load(file = "data/npms1518_PlotsSamples_17Aug2018.Rdata") # plot/sample data
-load(file = "data/npms1518_SamplesSpecies_17Aug2018.Rdata") # sample/species data
+## No longer needed, as these objects will be in the global environment as a result of sourcing script "2_getData..."
+#load(file = "data/npms1518_PlotsSamples_17Aug2018.Rdata") # plot/sample data
+#load(file = "data/npms1518_SamplesSpecies_17Aug2018.Rdata") # sample/species data
 #
 
 ## Read in the official list of indicators with indicia preferred names and TVKs

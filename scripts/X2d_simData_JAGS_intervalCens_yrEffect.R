@@ -200,7 +200,6 @@ for (i in 1:N){ # N is the number of plots
     } # end of years loop
 } # end of plot loop
 
-    
 ## Derived values from state model above (average value of c.Pos, psi and C.S per year)
 for (j in 1:Y){ # number of years
   cPosAn[1,j] <- mean(c.Pos[1:N,j]) # mean across C.Pos per year, etc.

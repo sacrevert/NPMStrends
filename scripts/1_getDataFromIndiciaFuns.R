@@ -11,8 +11,10 @@
 
 ############# Function to retrieve plot and sample level attributes
 ## Change dates as appropriate! (Lines 23 and 36)
-getNpmsData_PlotsSamples <- function(dsn = "PostgreSQL35W", user, password) {   channel <- RODBC::odbcConnect(dsn = dsn, uid = user, pwd = password)
+getNpmsData_PlotsSamples <- function(dsn = "PostgreSQL30", user = "brc_read_only", password) {   
+                                                                    channel <- RODBC::odbcConnect(dsn = dsn, uid = user, password = password)
                                                                     temp <- RODBC::sqlQuery(channel, paste(
+                                                                    "set search_path to indicia;",
                                                                     "select sq.plot_id, sq.monad, occs.sample, occs.title, habs.term as surv_habitat",
                                                                     "from",
 	                                                                    "(select s.id as sample, su.title",
@@ -57,7 +59,8 @@ getNpmsData_PlotsSamples <- function(dsn = "PostgreSQL35W", user, password) {   
 
 ############# Function to retrieve taxon data for samples
 ## Change dates as appropriate! (Lines 67 and 76)
-getNpmsData_SamplesSpecies <- function(dsn = "PostgreSQL35W", user, password) {   channel <- RODBC::odbcConnect(dsn = dsn, uid = user, pwd = password)
+getNpmsData_SamplesSpecies <- function(dsn = "PostgreSQL30", user = "brc_read_only", password) {   
+                                                                                  channel <- RODBC::odbcConnect(dsn = dsn, uid = user, password = password)
                                                                                   temp <- RODBC::sqlQuery(channel, paste( ## Wildflower data
                                                                                     "select co.id, co.sample_id, co.date_start as date, co.preferred_taxon, co.taxa_taxon_list_external_key as tvk,  oav.int_value as domin, co.record_status as record_status, co.sensitivity_precision",
                                                                                     "from indicia.cache_occurrences co",
