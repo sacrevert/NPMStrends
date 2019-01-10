@@ -8,20 +8,22 @@
 #### Warning! This is slow (11 mins if retrieving data up between 2015-mid-2018) and will get increasingly slower
 #### Need to investigate possible speed-ups/new cache table that runs this automatically on some periodic basis
 ####
-
+list.of.packages <- c("RODBC")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(RODBC)
 ############# Function to retrieve plot and sample level attributes
 ## Change dates as appropriate! (Lines 23 and 36)
 getNpmsData_PlotsSamples <- function(dsn = "PostgreSQL30", user = "brc_read_only", password) {   
                                                                     channel <- RODBC::odbcConnect(dsn = dsn, uid = user, pwd = password)
                                                                     temp <- RODBC::sqlQuery(channel, paste(
-                                                                    "set search_path to indicia;",
                                                                     "select sq.plot_id, sq.monad, occs.sample, occs.title, habs.term as surv_habitat",
                                                                     "from",
 	                                                                    "(select s.id as sample, su.title",
-                                                                      "from samples s",
-                                                                      "left join cache_occurrences co",
+                                                                      "from indicia.samples s",
+                                                                      "left join indicia.cache_occurrences co",
                                                                       "on co.sample_id = s.id",
-                                                                      "left join surveys su",
+                                                                      "left join indicia.surveys su",
                                                                       "on su.id = s.survey_id",
                                                                       "where s.date_start between '2015-01-01' and '2018-08-15'",
                                                                       "and s.survey_id in (87,154,155)",
@@ -29,7 +31,7 @@ getNpmsData_PlotsSamples <- function(dsn = "PostgreSQL30", user = "brc_read_only
                                                                       ") occs",
                                                                     "join",
                                                                       "(select s.id sample_id, t.term",
-                                                                      "from samples s, sample_attributes sa, sample_attribute_values sav, termlists_terms tt, terms t",
+                                                                      "from indicia.samples s, indicia.sample_attributes sa, indicia.sample_attribute_values sav, indicia.termlists_terms tt, indicia.terms t",
                                                                       "where s.id = sav.sample_id",
                                                                       "and sav.sample_attribute_id = sa.id",
                                                                       "and tt.termlist_id = sa.termlist_id",
@@ -45,9 +47,9 @@ getNpmsData_PlotsSamples <- function(dsn = "PostgreSQL30", user = "brc_read_only
                                                                     "on occs.sample = habs.sample_id",
                                                                     "join",
                                                                       "(select distinct square.centroid_sref as monad, plot.id as plot_id, visit.id as sample_id",
-                                                                      "from samples visit",
-                                                                      "join locations plot on plot.id = visit.location_id AND plot.deleted=false",
-                                                                      "join locations square on square.id = plot.parent_id AND square.deleted=false",
+                                                                      "from indicia.samples visit",
+                                                                      "join indicia.locations plot on plot.id = visit.location_id AND plot.deleted=false",
+                                                                      "join indicia.locations square on square.id = plot.parent_id AND square.deleted=false",
                                                                       "where visit.survey_id in (87,154,155) AND visit.deleted=false",
                                                                       "group by square.centroid_sref, plot.id, visit.id",
                                                                       ") sq",

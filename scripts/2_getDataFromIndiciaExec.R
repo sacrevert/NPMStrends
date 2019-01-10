@@ -10,11 +10,10 @@
 ####
 #rm(list=ls())
 
-## Check for RODBC etc. and install if not available
-list.of.packages <- c("RODBC", "rstudioapi")
+## Check for rstudioapi and install if not available
+list.of.packages <- c("rstudioapi")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
-library(RODBC)
 ##
 source(file = "scripts/1_getDataFromIndiciaFuns.R") # source SQL functions
 password <- rstudioapi::askForPassword("Database password")
@@ -32,7 +31,7 @@ npms15_18spp <- getNpmsData_SamplesSpecies(password = password)
 # change this so that file name automatically updates with system date - 09.01.2019
 #save(npms15_18spp, file = "data/npms1518_SamplesSpecies_17Aug2018.Rdata") # 101,508 -- old version - 17.08.2018
 save(npms15_18spp, file = paste("data/npms1518_SamplesSpecies_", as.character(Sys.Date()), ".Rdata", sep =""))
-
+rm(password)
 # regarding the row count discrepancies, see the two versions of the SQL in 
 # W:\PYWELL_SHARED\Pywell Projects\BRC\_BRC_projects\NPMS\Analyses\2018 08 - Per species trend analyses\SQL\extractData_v0.0.sql
 
