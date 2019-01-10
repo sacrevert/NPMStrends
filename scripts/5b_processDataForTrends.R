@@ -10,6 +10,12 @@ new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"
 if(length(new.packages)) install.packages(new.packages)
 library(R2jags) ## obviously requires that JAGS (preferably 4.3.0) is installed
 
+###### Future improvments (noted 10.01.2019)
+# Have function where is npms15_18plots and npms15_18spp are not in the environment,
+# then files loaded and some processing from 4_extractData done?
+# Also need to think about species that are present in aggregates and separately
+# e.g. Thymus polytrichus and Ulex gallii -- currently I am creating separate trends for these
+######
 
 # domin things
 domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors = F)
@@ -135,8 +141,8 @@ runModels_v1 <- function(i) {
 # this will be applied across the list created in 4_extractData.R (sppDatList), minus excluded species
 sppModels <- list()
 #sppModels <- lapply(seq_along(spForMods[1]), function(i) runModels_v1(i)) # test
-sppModels <- lapply(seq_along(spForMods[1:5]), function(i) runModels_v1(i))
-names(sppModels) <- names(spForMods[1:5])
+sppModels <- lapply(seq_along(spForMods[1:10]), function(i) runModels_v1(i))
+names(sppModels) <- names(spForMods[1:10])
 
 
 #### END OF FUNCTIONS SECTION. BELOW WAS SINGLE SPECIES DEVELOPMENT WORK ####
@@ -297,9 +303,9 @@ cat("
 
     ## Derived values from state model above (average value of c.Pos, psi and C.S per year)
     for (j in 1:Y){ # number of years
-      cPosAn[1,j] <- mean(c.Pos[1:N,j]) # mean across C.Pos per year, etc.
-      psiAn[1,j] <- mean(psi[1:N,j])
-      cSAn[1,j] <- mean(C.S[1:N,j])
+      cPosAn[j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
+      psiAn[j] <- mean(psi[,j])
+      cSAn[j] <- mean(C.S[,j])
     }
 
     ## Plot positive covers

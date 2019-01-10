@@ -176,9 +176,9 @@ cat("
 
     ## Derived values from state model above (average value of c.Pos, psi and C.S per year)
     for (j in 1:Y){ # number of years
-      cPosAn[1,j] <- mean(c.Pos[1:N,j]) # mean across C.Pos per year, etc.
-      psiAn[1,j] <- mean(psi[1:N,j])
-      cSAn[1,j] <- mean(C.S[1:N,j])
+      cPosAn[1,j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
+      psiAn[1,j] <- mean(psi[,j])
+      cSAn[1,j] <- mean(C.S[,j])
     }
 
     ## Plot positive covers

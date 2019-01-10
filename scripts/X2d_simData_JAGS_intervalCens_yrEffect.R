@@ -202,9 +202,9 @@ for (i in 1:N){ # N is the number of plots
 
 ## Derived values from state model above (average value of c.Pos, psi and C.S per year)
 for (j in 1:Y){ # number of years
-  cPosAn[1,j] <- mean(c.Pos[1:N,j]) # mean across C.Pos per year, etc.
-  psiAn[1,j] <- mean(psi[1:N,j])
-  cSAn[1,j] <- mean(C.S[1:N,j])
+  cPosAn[1,j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
+  psiAn[1,j] <- mean(psi[,j])
+  cSAn[1,j] <- mean(C.S[,j])
 }
 
 ## Plot positive covers
@@ -237,8 +237,10 @@ sink()
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_vX2d_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
 #para.names <- c('mu.C', 'tau.C', 'gamma0')
-para.names <- c('cPosAn', 'psiAn', 'cSAn')
-#para.names <- c('psi')
+para.names <- c('psi', 'cPosAn', 'psiAn', 'cSAn')
+para.names <- c('psi')
+para.names <- c('z')
+para.names <- c('py')
 #mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
 #mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
 # Continue the MCMC runs with sampling

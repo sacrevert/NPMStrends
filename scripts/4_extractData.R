@@ -26,6 +26,10 @@ source(file = "scripts/3_processDataFuns.R")
 #save(Achi_mill_PAN, file = "data/Achi_mille_grassSamples_20180920.Rdata")
 ##
 
+## Following can be used if database extraction not run
+#load(file = "data/npms1518_SamplesSpecies_2019-01-10.Rdata")
+#load(file = "data/npms1518_PlotsSamples_2019-01-10.Rdata")
+
 ##############################################################
 ############ Generalised approach using functions ############
 ##############################################################
@@ -36,6 +40,7 @@ getSamps2 <- function(bsh) { getSamples(habsList = unique(habs[habs$NPMS.broad.h
 habSamps <- getSamps2(bsh = "Lowland grassland") # includes relevant broad and fine scale habitat names
 
 ## List of positive indicator species per fine habitat set (species subset = spp)
+inds <- read.csv(file = "data/npmsIndicatorsIndicia_Aug2018.csv", header = T, stringsAsFactors = F) # repeated from script 3
 selectSp <- function(bsh, sp) {tmp <- unique(inds[inds$broad.scale_habitat == bsh & inds$indicator_type == "positive",]$indiciaName)} 
 # get species list for relevant broad habitat
 focalSpp <- list()
