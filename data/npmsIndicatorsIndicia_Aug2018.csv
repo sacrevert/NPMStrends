@@ -55,7 +55,7 @@ Asplenium ruta-muraria,NBNSYS0000002050,Inland rocks and scree,"Rock outcrops, c
 Asplenium trichomanes,NBNSYS0000002046,Inland rocks and scree,"Rock outcrops, cliffs and scree",y,positive,y,Asplenium trichomanes,Asplenium trichomanes,NBNSYS0000002046
 Asplenium trichomanes,NBNSYS0000002046,Montane rocks and scree,"Rock outcrops, cliffs and scree",y,positive,y,Asplenium trichomanes,Asplenium trichomanes,NBNSYS0000002046
 Aster tripolium,NBNSYS0000004422,Coastal saltmarsh,Coast,y,positive,y,Aster tripolium,Aster tripolium,NBNSYS0000004422
-Atriplex,NHMSYS0000456279,Coastal vegetated shingle,Coast,y,Positive,y,Atriplex sp.,Atriplex,NHMSYS0000456279
+Atriplex,NHMSYS0000456279,Coastal vegetated shingle,Coast,y,positive,y,Atriplex sp.,Atriplex,NHMSYS0000456279
 Atriplex portulacoides,NBNSYS0000003119,Coastal saltmarsh,Coast,y,positive,,Atriplex portulacoides,Atriplex portulacoides,NBNSYS0000003119
 Azolla filiculoides,NBNSYS0000002090,Nutrient-poor lakes and ponds,Freshwater,y,negative,,Azolla filiculoides,Azolla filiculoides,NBNSYS0000002090
 Azolla filiculoides,NBNSYS0000002090,Nutrient-rich lakes and ponds,Freshwater,y,negative,,Azolla filiculoides,Azolla filiculoides,NBNSYS0000002090
@@ -309,7 +309,7 @@ Galium saxatile,NBNSYS0000004310,Dry heathland,Heathland,y,positive,y,Galium sax
 Galium saxatile,NBNSYS0000004310,Montane dry heathland,Heathland,y,positive,y,Galium saxatile,Galium saxatile,NBNSYS0000004310
 Galium saxatile,NBNSYS0000004310,Native conifer woods and juniper scrub,Native pinewood and juniper scrub,y,positive,y,Galium saxatile,Galium saxatile,NBNSYS0000004310
 Galium sterneri,NBNSYS0000004312,Montane calcareous grassland,Upland grassland,y,positive,,Galium sterneri,Galium sterneri,NBNSYS0000004312
-Galium sterneri,NBNSYS0000004312,Montane rocks and scree,"Rock outcrops, cliffs and scree",y,Positive,,Galium sterneri,Galium sterneri,NBNSYS0000004312
+Galium sterneri,NBNSYS0000004312,Montane rocks and scree,"Rock outcrops, cliffs and scree",y,positive,,Galium sterneri,Galium sterneri,NBNSYS0000004312
 Galium verum,NBNSYS0000004309,Machair,Coast,y,positive,y,Galium verum,Galium verum,NBNSYS0000004309
 Genista anglica,NBNSYS0000003207,Dry heathland,Heathland,y,positive,,Genista anglica,Genista anglica,NBNSYS0000003207
 Genista anglica,NBNSYS0000003207,Montane dry heathland,Heathland,y,positive,,Genista anglica,Genista anglica,NBNSYS0000003207
@@ -337,7 +337,7 @@ Gymnocarpium dryopteris,NBNSYS0000002083,Native conifer woods and juniper scrub,
 Hedera helix,NBNSYS0000003630,Dry deciduous woodland,"Broadleaved woodland, hedges and scrub",y,negative,y,Hedera helix,Hedera helix,NBNSYS0000003630
 Hedera helix,NBNSYS0000003630,Hedgerows of native species,"Broadleaved woodland, hedges and scrub",y,positive,y,Hedera helix,Hedera helix,NBNSYS0000003630
 Helianthemum nummularium,NHMSYS0000459266,Maritime cliffs and slopes,Coast,y,positive,y,Helianthemum nummularium,Helianthemum nummularium,NHMSYS0000459266
-Helictotrichon pratense,NBNSYS0000002616,Dry calcareous grassland,Lowland grassland,y,Positive,,Helictotrichon pratense,Helictotrichon pratense,NBNSYS0000002616
+Helictotrichon pratense,NBNSYS0000002616,Dry calcareous grassland,Lowland grassland,y,positive,,Helictotrichon pratense,Helictotrichon pratense,NBNSYS0000002616
 Helictotrichon pratense,NBNSYS0000002616,Montane calcareous grassland,Upland grassland,y,positive,,Helictotrichon pratense,Helictotrichon pratense,NBNSYS0000002616
 Heracleum mantegazzianum,NBNSYS0000003711,Wet woodland,"Broadleaved woodland, hedges and scrub",y,negative,,Heracleum mantegazzianum,Heracleum mantegazzianum,NBNSYS0000003711
 Heracleum sphondylium,NBNSYS0000003710,Coastal saltmarsh,Coast,y,positive,y,Heracleum sphondylium,Heracleum sphondylium,NBNSYS0000003710
@@ -746,7 +746,7 @@ Spergularia rubra,NHMSYS0000463883,Dry acid grassland,Lowland grassland,y,positi
 Spirodela polyrhiza,NHMSYS0000463934,Nutrient-poor lakes and ponds,Freshwater,y,positive,,Spirodela polyrhiza,Spirodela polyrhiza,NHMSYS0000463934
 Spirodela polyrhiza,NHMSYS0000463934,Nutrient-rich lakes and ponds,Freshwater,y,positive,,Spirodela polyrhiza,Spirodela polyrhiza,NHMSYS0000463934
 Spirodela polyrhiza,NHMSYS0000463934,Rivers and streams,Freshwater,y,positive,,Spirodela polyrhiza,Spirodela polyrhiza,NHMSYS0000463934
-Stachys officinalis,NHMSYS0000463975,Dry acid grassland,Lowland grassland,y,Positive,y,Stachys officinalis,Stachys officinalis,NHMSYS0000463975
+Stachys officinalis,NHMSYS0000463975,Dry acid grassland,Lowland grassland,y,positive,y,Stachys officinalis,Stachys officinalis,NHMSYS0000463975
 Stachys officinalis,NHMSYS0000463975,Dry heathland,Heathland,y,positive,y,Stachys officinalis,Stachys officinalis,NHMSYS0000463975
 Stachys officinalis,NHMSYS0000463975,Montane dry heathland,Heathland,y,positive,y,Stachys officinalis,Stachys officinalis,NHMSYS0000463975
 Stachys palustris,NBNSYS0000004234,Nutrient-poor lakes and ponds,Freshwater,y,positive,,Stachys palustris,Stachys palustris,NBNSYS0000004234
@@ -863,7 +863,7 @@ Veronica montana,NBNSYS0000004103,Wet woodland,"Broadleaved woodland, hedges and
 Veronica officinalis,NBNSYS0000004102,Dry acid grassland,Lowland grassland,y,positive,y,Veronica officinalis,Veronica officinalis,NBNSYS0000004102
 Veronica officinalis,NBNSYS0000004102,Montane acid grassland,Upland grassland,y,positive,y,Veronica officinalis,Veronica officinalis,NBNSYS0000004102
 Veronica officinalis,NBNSYS0000004102,Montane dry heathland,Heathland,y,positive,y,Veronica officinalis,Veronica officinalis,NBNSYS0000004102
-Vicia cracca,NBNSYS0000003283,Coastal saltmarsh,Coast,y,Positive,y,Vicia cracca,Vicia cracca,NBNSYS0000003283
+Vicia cracca,NBNSYS0000003283,Coastal saltmarsh,Coast,y,positive,y,Vicia cracca,Vicia cracca,NBNSYS0000003283
 Vicia cracca,NBNSYS0000003283,Coastal sand dunes,Coast,y,positive,y,Vicia cracca,Vicia cracca,NBNSYS0000003283
 Vicia cracca,NBNSYS0000003283,Dry calcareous grassland,Lowland grassland,y,positive,y,Vicia cracca,Vicia cracca,NBNSYS0000003283
 Vicia cracca,NBNSYS0000003283,Nutrient-rich lakes and ponds,Freshwater,y,positive,y,Vicia cracca,Vicia cracca,NBNSYS0000003283

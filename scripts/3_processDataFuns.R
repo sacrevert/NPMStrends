@@ -52,7 +52,7 @@ indsB_minimal <- rbind(indsB_tmp1, indsB_tmp2)
 indsLookup <- rbind(indsF_minimal, indsB_minimal) # combine
 
 ## function to select the relevant samples for any given set of habitats
-getSamples <- function(habsList){ temp <- merge(npms15_18spp, npms15_18, by.x = 'sample_id', by.y = "sample", all.x = T, all.y = F)
+getSamples <- function(habsList){ temp <- merge(npms15_18spp, npms15_18plots, by.x = 'sample_id', by.y = "sample", all.x = T, all.y = F)
                                   temp2 <- temp[temp$surv_habitat %in% habsList,]
                                   return(temp2)
                                 }
@@ -86,12 +86,13 @@ getSamples <- function(habsList){ temp <- merge(npms15_18spp, npms15_18, by.x = 
 ###########################################
 ## Generalise to make the function function
 ###########################################
-spSamplePA <- function(samples, species){ temp <- aggregate(preferred_taxon ~ sample_id + date, data = samples, function(x) max(ifelse(x == species, 1, 0)))
+spSamplePA <- function(samples, species){ tryCatch(
+                                          {temp <- aggregate(preferred_taxon ~ sample_id + date, data = samples, function(x) max(ifelse(x == species, 1, 0)))
                                           presence <- temp[temp$preferred_taxon == 1,] # samples containing the taxon of interest
-                                          presSamps <- merge(presence, npms15_18, by.x = "sample_id", by.y = "sample", all.x = T, all.y = F) # useful for subsequent rbind
+                                          presSamps <- merge(presence, npms15_18plots, by.x = "sample_id", by.y = "sample", all.x = T, all.y = F) # useful for subsequent rbind
                                           presSamps$combination <- paste(presSamps$surv_habitat,", ",presSamps$title, sep = "") # useful for subsequent rbind
                                           absence <- temp[temp$preferred_taxon == 0,] # samples NOT containing the taxon of interest (but are these 0 or NA?)
-                                          absSamps <- merge(absence, npms15_18, by.x = "sample_id", by.y = "sample", all.x = T, all.y = F) # habitat/level info for every sample
+                                          absSamps <- merge(absence, npms15_18plots, by.x = "sample_id", by.y = "sample", all.x = T, all.y = F) # habitat/level info for every sample
                                           absSamps$combination <- paste(absSamps$surv_habitat,", ",absSamps$title, sep = "") # create column for lookup to indsLookup
                                           indsLookup_fil <- indsLookup[indsLookup$indiciaName == species,]
                                           absSamps_AN <- merge(absSamps, indsLookup_fil, by.x = "combination", by.y = "combined", all.x = T, all.y = F)# absent or NA indicator
@@ -106,7 +107,8 @@ spSamplePA <- function(samples, species){ temp <- aggregate(preferred_taxon ~ sa
                                           samples_PAN <- merge(samples_PAN, npms15_18spp[npms15_18spp$preferred_taxon == species,], by.x = "sample_id", by.y = "sample_id", all.x = T, all.y = F)
                                           samples_PAN$domin <- ifelse(samples_PAN$PAN == 0, 0, samples_PAN$domin)
                                           samples_PAN <- merge(samples_PAN, domins, by.x = "domin", by.y = "dominOrig", all.x = T, all.y = F)
-                                          return(samples_PAN)
+                                          return(samples_PAN)}, 
+                                          error = function(err) print(species) )
 }
 
 ## Let's see if it works!

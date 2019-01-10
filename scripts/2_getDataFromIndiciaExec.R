@@ -1,6 +1,7 @@
 ## 2. Execute function to retrieve plot/sample/habitat/level data from Indicia/NPMS database (to avoid hardcoding passwords in script)
 # O.L. Pescott
 # 17.08.2018
+# 09.01.2019, changes include automatic dating of saved sample files, and database password request (in RStudio only)
 
 # SQL query is also in W:\PYWELL_SHARED\Pywell Projects\BRC\_BRC_projects\NPMS\Analyses\2018 08 - Per species trend analyses\SQL\extractData_v0.0.sql
 

@@ -1,15 +1,20 @@
-########################################################################
-#### 5b. Create functions make multiple runs across species easier.#####
-########################################################################
+################################################################################
+#### 5b. Create function to make model runs across multiple species easier.#####
+################################################################################
+# O.L. Pescott, olipes@ceh.ac.uk
 # 09.01.2019
-rm(list=ls())
+#rm(list=ls())
 ######################################
-library(R2jags)
-######################################
-
-load(file = "data/Achi_mille_grassSamples_20180920.Rdata")
+list.of.packages <- c("R2jags")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+library(R2jags) ## obviously requires that JAGS (preferably 4.3.0) is installed
+##############################################################
+#### Single example of Achillea millefolium in grasslands ####
+############################################################## #### collapse ####
+#load(file = "data/Achi_mille_grassSamples_20180920.Rdata")
 #load("W:/PYWELL_SHARED/Pywell Projects/BRC/_BRC_projects/NPMS/Analyses/2018 08 - Per species trend analyses/r_proj/NPMStrends/data/Achi_mille_grassSamples_20180920.Rdata")
-head(Achi_mill_PAN); tail(Achi_mill_PAN); unique(Achi_mill_PAN$dominUnify)
+#head(Achi_mill_PAN); tail(Achi_mill_PAN); unique(Achi_mill_PAN$dominUnify)
 
 # domin things
 domins <- read.csv(file = "data/dominScores.csv", header = T, stringsAsFactors = F)
