@@ -45,12 +45,12 @@ logit <- function(x){ # logit function
 
 
 ## Could put this in a simulation function (see Wright et al. 2017)
-N <- 50 # number of spatially unique plots
-J <- 5 # number of visits to a plot within a year (assume constant for the moment)
+N <- 100 # number of spatially unique plots
+J <- 2 # number of visits to a plot within a year (assume constant for the moment)
 #psi <- 0.5 # true occupancy (average)
 psi <- 1 # should be easier for model to retrieve true values of gamma0 and gamma1 if occupancy is 1 -- this appears to be true
-Y <- 2 # total number of years of monitoring covered by the data
-mu <- 0.5       # parameter for mean of cover beta distribution # 0.25
+Y <- 4 # total number of years of monitoring covered by the data
+mu <- 0.05       # parameter for mean of cover beta distribution # 0.25
 phi <- 10      # parameter for 'precision' of cover distribution # 3
 gamma0 <- -2   # intercept for detection logistic regression # -1.5
 gamma1 <- 3   # slope for detection with %cover # 2
@@ -92,7 +92,7 @@ cpos[,1] <- as.vector(y.array)[which(as.vector(y.array) > 0)] # actual cover val
 cpos[,2] <- 1 # indicator stating the observation censored
 cpos[,3] <- NA # NA values for latent variable
 # code borrowed from Pescott et al. 2016 Power paper:
-t <- c(1e-3,0.05,
+t <- c(1e-14,0.05,
        0.05,0.25,
        0.25,0.5,
        0.5,0.75,
@@ -104,7 +104,7 @@ colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
 intervals <- c(1,2,3,4,5,6)
 tdf$int <- intervals
 # library(plyr) for SQL join function (like merge but keeps order) -- although actually could use merge with sort = F
-tInt <- c(1e-3,0.05,0.25,0.5,0.75,0.95,0.999)
+tInt <- c(1e-14,0.05,0.25,0.5,0.75,0.95,0.999)
 int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points
 int <- as.data.frame(int)
 m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point (although merge resorts, need to add row index to resort on)
@@ -238,9 +238,9 @@ jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_vX2d_cens.txt', data = Data, in
 # Specify parameters for which posterior samples are saved
 #para.names <- c('mu.C', 'tau.C', 'gamma0')
 para.names <- c('psi', 'cPosAn', 'psiAn', 'cSAn')
-para.names <- c('psi')
-para.names <- c('z')
-para.names <- c('py')
+#para.names <- c('psi')
+#para.names <- c('z')
+#para.names <- c('py')
 #mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
 #mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
 # Continue the MCMC runs with sampling

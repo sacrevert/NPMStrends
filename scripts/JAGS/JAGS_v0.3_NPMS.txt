@@ -17,6 +17,7 @@
       cPosAn[j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
       psiAn[j] <- mean(psi[,j])
       cSAn[j] <- mean(C.S[,j])
+      annOcc[j] <- (sum(z[,j]))/N
     }
 
     ## Plot positive covers
@@ -32,7 +33,7 @@
       p.dec[a] <- min(max(1e-4, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
       ## Can add observed cover (Domin scale) as covar to the following line
       logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA')
-      #yOrig[a] ~ dt(0, 0.01, 1) # Prior necessary to account for missing data (not sure this is the best distrbution though)
+      #yOrig[a] ~ dt(0, 0.01, 1)T(0,) # Prior necessary to account for missing data (not sure this is the best distrbution though)
       yOrig[a] ~ dunif(0,10) # Doesn't seem to make much difference to results
     }
     

@@ -31,10 +31,10 @@ logit <- function(x){ # logit function
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
 J <- 5 # number of visits to a plot within a year (assume constant for the moment)
-psi <- 0.7 # true occupancy across plots (average)
+psi <- 0.2 # true occupancy across plots (average)
 Y <- 3 # total number of years of monitoring covered by the simulated data
-mu <- 0.999      # parameter for mean of cover beta distribution (i.e. mean conditional on presence) # 0.25
-phi <- 3      # parameter for 'precision' of cover distribution (i.e. variance conditional on presence) # 3
+mu <- 0.9      # parameter for mean of cover beta distribution (i.e. mean conditional on presence) # 0.25
+phi <- 10      # parameter for 'precision' of cover distribution (i.e. variance conditional on presence) # 3
 gamma0 <- -1   # intercept for detection logistic regression # -1.5
 gamma1 <- 1   # slope for detection with %cover # 2
 
@@ -187,6 +187,14 @@ for (i in 1:N){ # N is the number of plots
     } # end of years loop
   } # end of plot loop
 
+## Derived values from state model above (average value of c.Pos, psi and C.S per year)
+for (j in 1:Y){ # number of years
+    cPosAn[j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
+    psiAn[j] <- mean(psi[,j])
+    cSAn[j] <- mean(C.S[,j])
+    annOcc[j] <- (sum(z[,j]))/N
+  }
+
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
     cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
@@ -198,13 +206,14 @@ for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
     p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
-    logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
+    logit(p.Dec[a]) <- gamma0# + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
   }
 
 ## Priors!
-#gamma0 ~ dt(0, 0.01, 1)
-gamma0 ~ dnorm(0, 1)
-gamma1 ~ dnorm(0, 1)
+gamma0 ~ dt(0, 0.01, 1)
+gamma1 ~ dt(0, 0.01, 1)
+#gamma0 ~ dnorm(0, 1)
+#gamma1 ~ dnorm(0, 1)
 mu.C ~ dunif(0, 1)
 tau.C ~ dt(0, 0.01, 1)T(0,)
 
@@ -215,7 +224,7 @@ sink()
 jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.1_cens.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
 # Specify parameters for which posterior samples are saved
 #para.names <- c('mu.C', 'tau.C', 'gamma0')
-para.names <- c('psi', 'gamma1')
+para.names <- c('psi', 'gamma0', 'psiAn','annOcc')
 # Continue the MCMC runs with sampling
 samples <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
 mean(summary(samples)$quantiles[1:100,3]) # mean occupancy (simulated psi value)

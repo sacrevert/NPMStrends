@@ -128,21 +128,40 @@ runModels_v1 <- function(i) {
                               cpos.Latent = c(0.001,0.025,0.04,0.075,0.175,0.29,0.375,0.625,0.85,0.975)[spPos$dominUnify] )
   #for ref only
   cPos.Init <- c(0.001,0.025,0.04,0.075,0.175,0.29,0.375,0.625,0.85,0.975)[spPos$dominUnify]
+  ### MAKE SURE YOU HAVE THE RIGHT MODEL SCRIPT ###
   jagsModel <- rjags::jags.model(file= 'scripts/JAGS/JAGS_v0.3_NPMS.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
+  ### MAKE SURE YOU HAVE THE RIGHT MODEL SCRIPT ###
   # Specify parameters for which posterior samples are saved
-  para.names <- c('mu.C', 'tau.C', 'gamma0', 'gamma1', 'cPosAn', 'psiAn', 'cSAn')
+  para.names <- c('psi', 'mu.C', 'tau.C', 'gamma0', 'gamma1', 'cPosAn', 'psiAn', 'cSAn')
   # Continue the MCMC runs with sampling
   samples <- rjags::coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
   ## Inspect results
   out <- summary(samples)
-  return(out)
+  mu_sd <- out$stat[,1:2] #make columns for mean and sd
+  q <- out$quantile[,c(3,1,5)] #make columns for median and CI
+  tableOut <- as.data.frame(cbind(mu_sd,q)) #make table
+  return(tableOut)
 }
+
+
+# 11.01.2019
+### Low occupancy and low cover seems to result in annual average occupancy being always around 50%
+### confirmed by simulations with avg low cover (0.1) and various levels of avg occupancy
+### only with high cover values that occupancy can be reliably estimated?
+
+## introduce summaries of z
 
 # this will be applied across the list created in 4_extractData.R (sppDatList), minus excluded species
 sppModels <- list()
 #sppModels <- lapply(seq_along(spForMods[1]), function(i) runModels_v1(i)) # test
-sppModels <- lapply(seq_along(spForMods[1:10]), function(i) runModels_v1(i))
-names(sppModels) <- names(spForMods[1:10])
+sppModels <- lapply(seq_along(spForMods[1]), function(i) runModels_v1(i))
+names(sppModels) <- names(spForMods[1])
+#mean(test[grep(rownames(test), pattern = "cPosAn") & regexpr(text = rownames(test), pattern = "(\\d+)\\D*\\z", perl = T),3])
+test <- sppModels[[1]]
+mean(test[c(12:1002),1])
+hist(test[c(12:1002),1], breaks = 1000)
+mean(test[c(1003:1993),1])
+hist(test[c(1003:1993),1], breaks = 1000)
 
 
 #### END OF FUNCTIONS SECTION. BELOW WAS SINGLE SPECIES DEVELOPMENT WORK ####
@@ -306,6 +325,7 @@ cat("
       cPosAn[j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
       psiAn[j] <- mean(psi[,j])
       cSAn[j] <- mean(C.S[,j])
+      annOcc[j] <- (sum(z[,j]))/N
     }
 
     ## Plot positive covers
@@ -321,7 +341,7 @@ cat("
       p.dec[a] <- min(max(1e-4, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
       ## Can add observed cover (Domin scale) as covar to the following line
       logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA')
-      #yOrig[a] ~ dt(0, 0.01, 1) # Prior necessary to account for missing data (not sure this is the best distrbution though)
+      #yOrig[a] ~ dt(0, 0.01, 1)T(0,) # Prior necessary to account for missing data (not sure this is the best distrbution though)
       yOrig[a] ~ dunif(0,10) # Doesn't seem to make much difference to results
     }
     
@@ -339,6 +359,7 @@ jagsModel <- jags.model(file= 'scripts/JAGS/JAGS_v0.3_NPMS.txt', data = Data, in
 
 # Specify parameters for which posterior samples are saved
 para.names <- c('mu.C', 'tau.C', 'gamma0', 'gamma1', 'cPosAn', 'psiAn', 'cSAn')
+para.names <- c('psi', 'cPosAn', 'psiAn', 'cSAn')
 # Continue the MCMC runs with sampling
 samples <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
 ## Inspect results
