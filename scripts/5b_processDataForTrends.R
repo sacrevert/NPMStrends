@@ -121,7 +121,8 @@ runModels_v1 <- function(i) {
   inits.fn <- function() list(z = zinit,
                               tau.C = runif(1,1,5),
                               mu.C = 0.5,
-                              gamma0 = rnorm(1,0,1),
+                              mean.p = runif(1),
+                              #gamma0 = rnorm(1,0,1),
                               gamma1 = rnorm(1,0,1),
                               # cpos.Latent is approx. mid-points of the categories, used as initial values (dominUnif)
                               # intervals start from 1 (midpoint for the "zeroth" category not needed for these latent values for positive data)
@@ -132,7 +133,8 @@ runModels_v1 <- function(i) {
   jagsModel <- rjags::jags.model(file= 'scripts/JAGS/JAGS_v0.3_NPMS.txt', data = Data, inits = inits.fn, n.chains = 3, n.adapt= 500)
   ### MAKE SURE YOU HAVE THE RIGHT MODEL SCRIPT ###
   # Specify parameters for which posterior samples are saved
-  para.names <- c('psi', 'mu.C', 'tau.C', 'gamma0', 'gamma1', 'cPosAn', 'psiAn', 'cSAn')
+  #para.names <- c('psi')
+  para.names <- c('psi', 'mu.C', 'tau.C', 'gamma0', 'gamma1', 'cPosAn', 'psiAn', 'cSAn', 'annOcc', 'c.Pos', 'C.S', 'tauC.T')
   # Continue the MCMC runs with sampling
   samples <- rjags::coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
   ## Inspect results
@@ -140,6 +142,9 @@ runModels_v1 <- function(i) {
   mu_sd <- out$stat[,1:2] #make columns for mean and sd
   q <- out$quantile[,c(3,1,5)] #make columns for median and CI
   tableOut <- as.data.frame(cbind(mu_sd,q)) #make table
+  ##################################
+  ## add DIC or similar as an output
+  ##################################
   return(tableOut)
 }
 
@@ -158,6 +163,7 @@ sppModels <- lapply(seq_along(spForMods[1]), function(i) runModels_v1(i))
 names(sppModels) <- names(spForMods[1])
 #mean(test[grep(rownames(test), pattern = "cPosAn") & regexpr(text = rownames(test), pattern = "(\\d+)\\D*\\z", perl = T),3])
 test <- sppModels[[1]]
+test[grep(rownames(test), pattern = 'annOcc'),]
 mean(test[c(12:1002),1])
 hist(test[c(12:1002),1], breaks = 1000)
 mean(test[c(1003:1993),1])
@@ -293,7 +299,8 @@ zinit <- matrix(1, nrow = N, ncol = Y)
 inits.fn <- function() list(z = zinit,
                             tau.C = runif(1,1,5),
                             mu.C = 0.5,
-                            gamma0 = rnorm(1,0,1),
+                            mean.p = runif(1),
+                            #gamma0 = rnorm(1,0,1),
                             gamma1 = rnorm(1,0,1),
                             # cpos.Latent is approx. mid-points of the categories, used as initial values (dominUnif)
                             # intervals start from 1 (midpoint for the "zeroth" category not needed for these latent values for positive data)
@@ -325,7 +332,7 @@ cat("
       cPosAn[j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
       psiAn[j] <- mean(psi[,j])
       cSAn[j] <- mean(C.S[,j])
-      annOcc[j] <- (sum(z[,j]))/N
+      annOcc[j] <- (sum(z[,j]))/N # avg occupancy propotion
     }
 
     ## Plot positive covers
@@ -340,16 +347,22 @@ cat("
       py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
       p.dec[a] <- min(max(1e-4, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
       ## Can add observed cover (Domin scale) as covar to the following line
-      logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA')
+      logit(p.Dec[a]) <- gamma0 + gamma1 * C.S[plotZ[a], yearZ[a]] ## C.S is estimated zero-inflated cover
+      #logit(p.Dec[a]) <- -2 + 3 * C.S[plotZ[a], yearZ[a]] ## C.S is estimated zero-inflated cover
+      #logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA')
       #yOrig[a] ~ dt(0, 0.01, 1)T(0,) # Prior necessary to account for missing data (not sure this is the best distrbution though)
-      yOrig[a] ~ dunif(0,10) # Doesn't seem to make much difference to results
+      #yOrig[a] ~ dunif(0,10) # Doesn't seem to make much difference to results
     }
     
     ## Priors!
-    gamma0 ~ dt(0, 0.01, 1)
-    gamma1 ~ dt(0, 0.01, 1)
+    mean.p ~ dunif(0,1) # intercept on prob scale
+    gamma0 <- logit(mean.p) # transformed # note that this requires tweak to initial values
+    gamma1 ~ dunif(-20,20) # broad uniform on logit scale
+    #gamma1 ~ dt(0, 0.04, 1)
+    #gamma1 ~ dt(0, 0.01, 1)
     mu.C ~ dunif(0, 1)
     tau.C ~ dt(0, 0.01, 1)T(0,)
+    tauC.T <- pow(tau.C, -0.5)
     
     } # END MODEL
     ", fill = TRUE)
