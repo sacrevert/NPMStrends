@@ -14,11 +14,13 @@ for (i in 1:N){ # N is the number of plots
 
 ## Derived values from state model above (average value of c.Pos, psi and C.S per year)
 for (j in 1:Y){ # number of years
-    cPosAn[j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
-    psiAn[j] <- mean(psi[,j])
-    cSAn[j] <- mean(C.S[,j])
+    #cPosAn[j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
+    #psiAn[j] <- mean(psi[,j])
+    #cSAn[j] <- mean(C.S[,j])
     annOcc[j] <- (sum(z[,j]))/N # avg occupancy proportion
 }
+#mCS <- mean(C.S[,]) #global C.S. mean
+#lmCS <- logit(mean(C.S[,]))
 
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
@@ -31,22 +33,24 @@ for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
     p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems (note that this *could* influence covars in detectability regression) -- important?
-    logit(p.Dec[a]) <- gamma0 + gamma1 * C.S[plotZ[a], yearZ[a]] ## + covars on detectability, influenced by estimated covers (before detection filter)
-    #logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
-    #yOrig[a] ~ dunif(0,10) # Doesn't seem too make much difference to results
+    #logit(p.Dec[a]) <- gamma0 + gamma1 * (logit(C.S[plotZ[a], yearZ[a]]))-lmCS ##    
+    #logit(p.Dec[a]) <- gamma0c + gamma1 * ((C.S[plotZ[a], yearZ[a]])-mCS) ## centering reduces gamma0c/gamma1 correlation
+    logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
+    yOrig[a] ~ dunif(0,10) # Doesn't seem too make much difference to results
 }
-
+#gamma0 <- gamma0c - gamma1 * mCS # Recover original intercept
 
 ## Priors!
-mean.p ~ dunif(0.01,0.99) # broad intercept on prob scale (but not going quite to +/- infinity!)
+mean.p ~ dbeta(1,1) # broad intercept on prob scale (but not going quite to +/- infinity!)
 gamma0 <- logit(mean.p) # transformed # note that this requires tweak to initial values
-gamma1 ~ dunif(-8,8) # broad uniform on logit scale (but not stupidly broad)
+gamma1 ~ dunif(-5,5) # broad uniform on logit scale (but not too broad)
 #gamma1 ~ dt(0, 0.04, 1)
 #gamma1 ~ dt(0, 0.01, 1)
 #gamma0 ~ dnorm(0, 1)
 #gamma1 ~ dnorm(0, 1)
 mu.C ~ dunif(0, 1)
 tau.C ~ dt(0, 0.01, 1)T(0,)
+#tauC.T <- pow(tau.C, -0.5)
 
 } # END MODEL
 

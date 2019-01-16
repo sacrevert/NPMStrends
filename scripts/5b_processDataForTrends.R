@@ -120,7 +120,7 @@ runModels_v1 <- function(i) {
   zinit <- matrix(1, nrow = N, ncol = Y)
   inits.fn <- function() list(z = zinit,
                               tau.C = runif(1,1,5),
-                              mu.C = 0.5,
+                              mu.C = runif(1,0,1),
                               mean.p = runif(1),
                               #gamma0 = rnorm(1,0,1),
                               gamma1 = rnorm(1,0,1),
@@ -134,18 +134,18 @@ runModels_v1 <- function(i) {
   ### MAKE SURE YOU HAVE THE RIGHT MODEL SCRIPT ###
   # Specify parameters for which posterior samples are saved
   #para.names <- c('psi')
-  para.names <- c('psi', 'mu.C', 'tau.C', 'gamma0', 'gamma1', 'cPosAn', 'psiAn', 'cSAn', 'annOcc', 'c.Pos', 'C.S', 'tauC.T')
+  para.names <- c('mu.C', 'tau.C', 'gamma0', 'gamma1', 'cPosAn', 'psiAn', 'cSAn', 'annOcc', 'tauC.T')
   # Continue the MCMC runs with sampling
   samples <- rjags::coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
   ## Inspect results
   out <- summary(samples)
   mu_sd <- out$stat[,1:2] #make columns for mean and sd
-  q <- out$quantile[,c(3,1,5)] #make columns for median and CI
+  q <- out$quantile[,c(1,3,5)] #make columns for median and CI
   tableOut <- as.data.frame(cbind(mu_sd,q)) #make table
   ##################################
   ## add DIC or similar as an output
   ##################################
-  return(tableOut)
+  return(list(tableOut,samples))
 }
 
 
@@ -297,11 +297,11 @@ Data <- list(N = N,
 # but these can probably be relaxed a bit more.
 zinit <- matrix(1, nrow = N, ncol = Y)
 inits.fn <- function() list(z = zinit,
-                            tau.C = runif(1,1,5),
-                            mu.C = 0.5,
-                            mean.p = runif(1),
+                            tau.C = runif(1, min = 1, max = 5),
+                            mu.C = runif(1, min = 0, max = 1),
+                            mean.p = runif(1, min = 0.01, max = 0.99),
                             #gamma0 = rnorm(1,0,1),
-                            gamma1 = rnorm(1,0,1),
+                            gamma1 = rnorm(1, mean = 0, sd = 1),
                             # cpos.Latent is approx. mid-points of the categories, used as initial values (dominUnif)
                             # intervals start from 1 (midpoint for the "zeroth" category not needed for these latent values for positive data)
                             cpos.Latent = c(0.001,0.025,0.04,0.075,0.175,0.29,0.375,0.625,0.85,0.975)[spPos$dominUnify]
@@ -355,9 +355,9 @@ cat("
     }
     
     ## Priors!
-    mean.p ~ dunif(0,1) # intercept on prob scale
+    mean.p ~ dbeta() # broad intercept on prob scale (but not going quite to +/- infinity!)
     gamma0 <- logit(mean.p) # transformed # note that this requires tweak to initial values
-    gamma1 ~ dunif(-20,20) # broad uniform on logit scale
+    gamma1 ~ dunif(-8,8) # broad uniform on logit scale (but not too broad)
     #gamma1 ~ dt(0, 0.04, 1)
     #gamma1 ~ dt(0, 0.01, 1)
     mu.C ~ dunif(0, 1)
