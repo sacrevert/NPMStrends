@@ -5,7 +5,7 @@
       for (j in 1:Y){ # number of years
         C.S[i,j] <- z[i,j] * c.Pos[i,j] # cover including zeros
         z[i,j] ~ dbern(psi[i,j]) # true PA state of a plot within a year depends on occupancy probability psi
-        psi[i,j] ~ dunif(0,1)
+        psi[i,j] ~ dbeta(1,1)
         c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-4,0.9999)
         a.C[i,j] <- mu.C * tau.C
         b.C[i,j] <- (1 - mu.C) * tau.C
@@ -15,8 +15,8 @@
     ## Derived values from state model above (average value of c.Pos, psi and C.S per year)
     for (j in 1:Y){ # number of years
       cPosAn[j] <- mean(c.Pos[,j]) # mean across C.Pos per year, etc.
-      psiAn[j] <- mean(psi[,j])
-      cSAn[j] <- mean(C.S[,j])
+      #psiAn[j] <- mean(psi[,j])
+      #cSAn[j] <- mean(C.S[,j])
       annOcc[j] <- (sum(z[,j]))/N # avg occupancy propotion
     }
 
@@ -32,22 +32,22 @@
       py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
       p.dec[a] <- min(max(1e-4, p.Dec[a]), 0.999) # trick to stop numerical problems (note that this will probably influence covars in detectability regression) -- important?
       ## Can add observed cover (Domin scale) as covar to the following line
-      logit(p.Dec[a]) <- gamma0 + gamma1 * C.S[plotZ[a], yearZ[a]] ## C.S is estimated zero-inflated cover
+      #logit(p.Dec[a]) <- gamma0 + gamma1 * C.S[plotZ[a], yearZ[a]] ## C.S is estimated zero-inflated cover
       #logit(p.Dec[a]) <- -2 + 3 * C.S[plotZ[a], yearZ[a]] ## C.S is estimated zero-inflated cover
-      #logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA')
+      logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA')
       #yOrig[a] ~ dt(0, 0.01, 1)T(0,) # Prior necessary to account for missing data (not sure this is the best distrbution though)
-      #yOrig[a] ~ dunif(0,10) # Doesn't seem to make much difference to results
+      yOrig[a] ~ dunif(0,10) # Doesn't seem to make much difference to results
     }
     
     ## Priors!
-    mean.p ~ dunif(0,1) # intercept on prob scale
+    mean.p ~ dbeta(1,1) # broad intercept on prob scale (but not going quite to +/- infinity!)
     gamma0 <- logit(mean.p) # transformed # note that this requires tweak to initial values
-    gamma1 ~ dunif(-20,20) # broad uniform on logit scale
+    gamma1 ~ dunif(-5,5) # broad uniform on logit scale (but not too broad)
     #gamma1 ~ dt(0, 0.04, 1)
     #gamma1 ~ dt(0, 0.01, 1)
-    mu.C ~ dunif(0, 1)
+    mu.C ~ dbeta(1,1)
     tau.C ~ dt(0, 0.01, 1)T(0,)
-    tauC.T <- pow(tau.C, -0.5)
+    #tauC.T <- pow(tau.C, -0.5)
     
     } # END MODEL
     

@@ -41,7 +41,7 @@ for (a in 1:V2){
 #gamma0 <- gamma0c - gamma1 * mCS # Recover original intercept
 
 ## Priors!
-mean.p ~ dbeta(1,1) # broad intercept on prob scale (but not going quite to +/- infinity!)
+mean.p ~ dbeta(1,1) # broad intercept on prob scale
 gamma0 <- logit(mean.p) # transformed # note that this requires tweak to initial values
 gamma1 ~ dunif(-5,5) # broad uniform on logit scale (but not too broad)
 #gamma1 ~ dt(0, 0.04, 1)

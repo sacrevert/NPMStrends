@@ -46,12 +46,12 @@ logit <- function(x){ # logit function
 
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
-J <- 10 # number of visits to a plot within a year (assume constant for the moment)
+J <- 2 # number of visits to a plot within a year (assume constant for the moment)
 #psi <- 0.5 # true occupancy (average)
-psi <- 1# should be easier for model to retrieve true values of gamma0 and gamma1 if occupancy is 1 -- this appears to be true
-Y <- 10 # total number of years of monitoring covered by the data
-mu <- 0.5       # parameter for mean of cover beta distribution # 0.25
-phi <- 10     # parameter for 'precision' of cover distribution # 3
+psi <- 0.25# should be easier for model to retrieve true values of gamma0 and gamma1 if occupancy is 1 -- this appears to be true
+Y <- 5 # total number of years of monitoring covered by the data
+mu <- 0.025       # parameter for mean of cover beta distribution # 0.25
+phi <- 3     # parameter for 'precision' of cover distribution # 3
 gamma0 <- -2  # intercept for detection logistic regression # -1.5
 gamma1 <- 3   # slope for detection with %cover # 2
 # e.g. plogis(-2 + 3*cover) makes for greater detectability range based on percent covers
@@ -81,6 +81,7 @@ for(k in 1:Y){
 }
 y.arrayOrig <- y.array # keep original covers
 y.array[which(x.array==0)] <- 0 # if the plant was not actually detected, then set the recorded cover to zero as well
+y.array[which(y.array<1e-16 & y.array > 0)] <- 1e-16 # put hard limit on lower cover bound
 ###################################### END OF SIMS
 
 ##################################################
@@ -258,16 +259,16 @@ para.names <- c('gamma1', 'gamma0', 'mu.C', 'tau.C', 'annOcc')
 #mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
 #mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
 # Continue the MCMC runs with sampling
-samples_m1 <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
+samples_m9 <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
 #samples <- update(jagsModel, n.iter = 3000)
 ## Inspect results
 #summary(samples)
 ## Inspect results
-out <- summary(samples_m1)
+out <- summary(samples_m9)
 mu_sd <- out$stat[,1:2] #make columns for mean and sd
 q <- out$quantile[,c(3,1,5)] #make columns for median and CI
-tableOut_m1 <- as.data.frame(cbind(mu_sd,q)) #make table
-save(tableOut_m1, samples_m1, file = "outputs/model1.Rdata")
+tableOut_m9 <- as.data.frame(cbind(mu_sd,q)) #make table
+#save(tableOut_m9, samples_m9, file = "outputs/model9.Rdata")
 #tableOut[grep(rownames(tableOut), pattern = 'gamma'),]
 #tableOut[grep(rownames(tableOut), pattern = 'annOcc'),]
 #write.csv(tableOut, file = "outputs/tests/test1_CS.csv")
