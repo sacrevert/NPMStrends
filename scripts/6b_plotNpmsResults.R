@@ -42,7 +42,7 @@ ggplot(muAll[c(44:86),], aes(species, `50%`)) +
   coord_flip() # export 1145 x 973
 
 ##################################
-####1. mu.C from extract object 1
+####2. annOcc years 1 and 3
 ##################################
 aoAll1 <- do.call(rbind, lapply(lapply(sppModels, '[[', 1), function(x) as.data.frame(x[rownames(x) %in% c("annOcc[1]"),])))
 aoAll1$species <- rownames(aoAll)
@@ -76,6 +76,7 @@ ggplot(aoAll3[c(1:43),], aes(species, `50%`)) +
   theme(axis.title.y=element_blank() ) +
   coord_flip() # export 1145 x 973
 
+# plot years 1 and 3 together
 aoAll13 <- rbind(aoAll1,aoAll3)
 aoAll13 <- aoAll13[order(aoAll13$species, aoAll13$year),]
 aoAll13$year <- as.factor(aoAll13$year)

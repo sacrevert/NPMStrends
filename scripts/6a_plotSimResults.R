@@ -5,7 +5,7 @@
 # 16.01.2019
 #rm(list=ls())
 library(ggplot2)
-#library(gridExtra)
+library(gridExtra)
 
 load(file="outputs/model1.Rdata")
 load(file="outputs/model2.Rdata")
@@ -46,12 +46,56 @@ model3Frame <- data.frame(Variable = rownames(tableOut_m3),
 allModelFrame <- data.frame(rbind(model1Frame, model2Frame, model3Frame))  # etc.
 
 # Plot
-p1 <- ggplot(allModelFrame, aes(colour = modelName)) + 
+p <- ggplot(allModelFrame, aes(colour = modelName)) + 
   #geom_hline(yintercept=0, lty=2, lwd=1) +
   geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
                               lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
   theme(legend.key.size = unit(2,"cm")) +
   coord_flip() # export 558 x 509
+
+### Improve display using gridExtra
+p1 <- ggplot(allModelFrame[allModelFrame$Variable=="annOcc[1]",], aes(colour = modelName)) + 
+  geom_hline(yintercept=1, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p2 <- ggplot(allModelFrame[allModelFrame$Variable=="gamma0",], aes(colour = modelName)) + 
+  geom_hline(yintercept=-2, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p3 <- ggplot(allModelFrame[allModelFrame$Variable=="gamma1",], aes(colour = modelName)) + 
+  geom_hline(yintercept=3, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p4 <- ggplot(allModelFrame[allModelFrame$Variable=="mu.C",], aes(colour = modelName)) + 
+  geom_hline(yintercept=0.5, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p5 <- ggplot(allModelFrame[allModelFrame$Variable=="tau.C",], aes(colour = modelName)) + 
+  geom_hline(yintercept=c(3,10), lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  #theme(legend.key.size = unit(0.5,"cm")) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+gridExtra::grid.arrange(p1,p2,p3,p4,p5, nrow = 2, ncol = 3)
 
 #################
 ### Models 4 to 6
@@ -88,6 +132,50 @@ p456 <- ggplot(allModelFrame456, aes(colour = modelName)) +
                   lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
   theme(legend.key.size = unit(2,"cm")) +
   coord_flip() # export 558 x 509
+
+### Improve display using gridExtra
+p6 <- ggplot(allModelFrame456[allModelFrame456$Variable=="annOcc[1]",], aes(colour = modelName)) + 
+  geom_hline(yintercept=c(0.75,0.5,0.25), lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p7 <- ggplot(allModelFrame456[allModelFrame456$Variable=="gamma0",], aes(colour = modelName)) + 
+  geom_hline(yintercept=-2, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p8 <- ggplot(allModelFrame456[allModelFrame456$Variable=="gamma1",], aes(colour = modelName)) + 
+  geom_hline(yintercept=3, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p9 <- ggplot(allModelFrame456[allModelFrame456$Variable=="mu.C",], aes(colour = modelName)) + 
+  geom_hline(yintercept=0.5, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p10 <- ggplot(allModelFrame456[allModelFrame456$Variable=="tau.C",], aes(colour = modelName)) + 
+  geom_hline(yintercept=3, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  #theme(legend.key.size = unit(0.5,"cm")) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+gridExtra::grid.arrange(p6,p7,p8,p9,p10, nrow = 2, ncol = 3)
 
 #################
 ### Models 7 to 9
@@ -127,3 +215,45 @@ p789 <- ggplot(allModelFrame789, aes(colour = modelName)) +
   theme(legend.key.size = unit(2,"cm")) +
   coord_flip() # export 558 x 509
 
+p11 <- ggplot(allModelFrame789[allModelFrame789$Variable=="annOcc[1]",], aes(colour = modelName)) + 
+  geom_hline(yintercept=c(0.25), lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p12 <- ggplot(allModelFrame789[allModelFrame789$Variable=="gamma0",], aes(colour = modelName)) + 
+  geom_hline(yintercept=-2, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p13 <- ggplot(allModelFrame789[allModelFrame789$Variable=="gamma1",], aes(colour = modelName)) + 
+  geom_hline(yintercept=3, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p14 <- ggplot(allModelFrame789[allModelFrame789$Variable=="mu.C",], aes(colour = modelName)) + 
+  geom_hline(yintercept=c(0.025,0.25,0.5), lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+p15 <- ggplot(allModelFrame789[allModelFrame789$Variable=="tau.C",], aes(colour = modelName)) + 
+  geom_hline(yintercept=3, lty=2, lwd=1) +
+  geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
+                  lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
+  #theme(legend.key.size = unit(0.5,"cm")) +
+  theme(legend.position = "none") +
+  theme(axis.text.y = element_text(angle = 90, hjust = 1)) +
+  theme(axis.title.y=element_blank() ) +
+  coord_flip() # export 558 x 509
+gridExtra::grid.arrange(p11,p12,p13,p14,p15, nrow = 2, ncol = 3)
