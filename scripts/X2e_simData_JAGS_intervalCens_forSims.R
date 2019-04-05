@@ -30,21 +30,6 @@ logit <- function(x){ # logit function
 ######################################
 
 ######################################
-# Simulations based on those of Wright et al. 2017
-######################################
-## Good estimates of gamma0, gamma1, mu.C and tau.C with N = 100, J = 10, psi = 1, Y = 10, mu = 0.5, phi = 10, gamma0 = -2, gamma1 = 3
-#         Mean       SD  Naive SE Time-series SE
-#gamma0 -1.980 0.069046 0.0017827      0.0085523
-#gamma1  2.969 0.129425 0.0033417      0.0167760
-#mu.C    0.536 0.002886 0.0000745      0.0001088
-#tau.C  10.216 0.292774 0.0075594      0.0176602
-
-#          2.5%     25%    50%     75%   97.5%
-#gamma0 -2.1147 -2.0277 -1.982 -1.9311 -1.8434
-#gamma1  2.7112  2.8822  2.974  3.0578  3.2175
-#mu.C    0.5303  0.5339  0.536  0.5381  0.5414
-#tau.C   9.6300 10.0310 10.221 10.3986 10.7998
-
 ## Could put this in a simulation function (see Wright et al. 2017)
 N <- 100 # number of spatially unique plots
 J <- 5 # number of visits to a plot within a year (assume constant for the moment)
@@ -74,12 +59,9 @@ for(k in 1:Y){
     for(j in 1:J){
       x.array[i, j, k] <- ifelse(y.array[i, j, k] > 0,
                                  rbinom(1, 1, 
-                                        #plogis(gamma0 + y.array[i, j, k])), # detection function 1
-                                        #plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
-                                        plogis(gamma0)),# + gamma1*y.array[i, j, k])), # detection function 2
-                                 #1), # for testing: if you remove probabilistic element, then mu.C better estimated
-                                 # if you make detection perfect, then gamma0 and gamma1 estiamted as ~4.5 and 2
-                                 # which means that plogis(4.5 + 2*0.01) and plogis(4.5 + 2*0.99) both = ~1.00 
+                                        plogis(gamma0 + gamma1*y.array[i, j, k])), # standard detection function with link between cover and detection
+                                        #plogis(gamma0)) # intercept only
+                                 #1), # for perfect detection
                                  0)
     }
   }
@@ -225,13 +207,13 @@ for(k in 1:n.Plot.pos){
 }
 
 ## Observation model for all plot visits ([within-year] detection within plots)
-mY <- mean(y[]) # mean detected cover across all years for mean-centering
+mY <- mean(y[]) # mean detected cover across all years for mean-centring
 for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
     p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems
     logit(p.Dec[a]) <- gamma0c + gamma1 * (y[a] - mY) # centering reduces gamma0c/gamma1 correlation
-    #logit(p.Dec[a]) <- gamma0 + gamma1 * y[a]  # centering reduces gamma0c/gamma1 correlation
+    #logit(p.Dec[a]) <- gamma0 + gamma1 * y[a]
     #logit(p.Dec[a]) <- gamma0 # without dependency of detection on abundance (requires changes to L236 and prior as well)
 }
 # only required if you are including detected cover in estimate of detectability
