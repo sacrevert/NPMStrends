@@ -1,3 +1,5 @@
 .RHISTORY
 .Rproj.user
 r_proj.Rproj
+outputs/archive
+outputs/plots

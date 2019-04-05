@@ -7,15 +7,19 @@
 library(ggplot2)
 #library(gridExtra)
 
-load(file = "outputs/sppRuns/grasslands_16012019.Rdata") #loads list object sppModels
+#load(file = "outputs/sppRuns/grasslands_16012019.Rdata") #loads list object sppModels
 #load(file = "C:\\Users\\olipes\\Desktop\\grasslands_16012019.Rdata")
+#load(file = "outputs/sppRuns/grasslands_26032019.Rdata") 
+load(file = "outputs/sppRuns/grasslands_26032019_v2_gamma0only.Rdata")
 
-test <- sppModels[[1]][[1]]
+#test <- sppModels[[1]][[2]]
 ##################################
 ####1. mu.C from extract object 1
 ##################################
-muAll <- do.call(rbind, lapply(lapply(sppModels, '[[', 1), function(x) as.data.frame(x[rownames(x) %in% c("mu.C"),])))
+muAll <- do.call(rbind, lapply(lapply(sppModels, '[[', 2), function(x) as.data.frame(x[rownames(x) %in% c("mu.C"),])))
 muAll$species <- rownames(muAll)
+muAll <- muAll[order(muAll$`50%`, decreasing = T),]
+muAll$species <- factor(muAll$species, levels = c(muAll$species))
 
 ggplot(muAll[c(1:43),], aes(species, `50%`)) + 
   #geom_hline(yintercept=0, lty=2, lwd=1, colour="grey50") +
@@ -44,8 +48,8 @@ ggplot(muAll[c(44:86),], aes(species, `50%`)) +
 ##################################
 ####2. annOcc years 1 and 3
 ##################################
-aoAll1 <- do.call(rbind, lapply(lapply(sppModels, '[[', 1), function(x) as.data.frame(x[rownames(x) %in% c("annOcc[1]"),])))
-aoAll1$species <- rownames(aoAll)
+aoAll1 <- do.call(rbind, lapply(lapply(sppModels, '[[', 2), function(x) as.data.frame(x[rownames(x) %in% c("annOcc[1]"),])))
+aoAll1$species <- rownames(aoAll1)
 aoAll1$year <- 1
 ggplot(aoAll1[c(1:43),], aes(species, `50%`)) + 
   #geom_hline(yintercept=0, lty=2, lwd=1, colour="grey50") +
@@ -60,8 +64,8 @@ ggplot(aoAll1[c(1:43),], aes(species, `50%`)) +
   theme(axis.title.y=element_blank() ) +
   coord_flip() # export 1145 x 973
 
-aoAll3 <- do.call(rbind, lapply(lapply(sppModels, '[[', 1), function(x) as.data.frame(x[rownames(x) %in% c("annOcc[3]"),])))
-aoAll3$species <- rownames(aoAll)
+aoAll3 <- do.call(rbind, lapply(lapply(sppModels, '[[', 2), function(x) as.data.frame(x[rownames(x) %in% c("annOcc[3]"),])))
+aoAll3$species <- rownames(aoAll3)
 aoAll3$year <- 3
 ggplot(aoAll3[c(1:43),], aes(species, `50%`)) + 
   #geom_hline(yintercept=0, lty=2, lwd=1, colour="grey50") +
@@ -86,7 +90,7 @@ ggplot(aoAll13[c(1:86),], aes(colour = year, group = year)) +
                 lwd=0.5, position = position_dodge(width = 0.5)) +
   #geom_errorbar(aes(ymin = quant0.25, ymax = quant0.75), 
   #              lwd=2.5, colour="gray0", width=0) +
-  scale_y_continuous(limits=c(0.45,0.65)) +
+  scale_y_continuous(limits=c(0.35,0.75)) +
   #geom_point(size=2.0, pch=21, fill="white") +
   labs(y = "Occupancy estimate: years 1 & 3") +
   theme_bw() +

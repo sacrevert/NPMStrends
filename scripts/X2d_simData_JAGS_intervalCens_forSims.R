@@ -45,13 +45,13 @@ logit <- function(x){ # logit function
 #tau.C   9.6300 10.0310 10.221 10.3986 10.7998
 
 ## Could put this in a simulation function (see Wright et al. 2017)
-N <- 100 # number of spatially unique plots
-J <- 2 # number of visits to a plot within a year (assume constant for the moment)
+N <- 30 # number of spatially unique plots
+J <- 10 # number of visits to a plot within a year (assume constant for the moment)
 #psi <- 0.5 # true occupancy (average)
 psi <- 0.25# should be easier for model to retrieve true values of gamma0 and gamma1 if occupancy is 1 -- this appears to be true
-Y <- 5 # total number of years of monitoring covered by the data
-mu <- 0.025       # parameter for mean of cover beta distribution # 0.25
-phi <- 3     # parameter for 'precision' of cover distribution # 3
+Y <- 3 # total number of years of monitoring covered by the data
+mu <- 0.25       # parameter for mean of cover beta distribution # 0.25
+phi <- 10     # parameter for 'precision' of cover distribution # 3
 gamma0 <- -2  # intercept for detection logistic regression # -1.5
 gamma1 <- 3   # slope for detection with %cover # 2
 # e.g. plogis(-2 + 3*cover) makes for greater detectability range based on percent covers
@@ -72,6 +72,7 @@ for(k in 1:Y){
                                  rbinom(1, 1, 
                                         #plogis(gamma0 + y.array[i, j, k])), # detection function 1
                                         plogis(gamma0 + gamma1*y.array[i, j, k])), # detection function 2
+                                        #plogis(gamma0)),# + gamma1*y.array[i, j, k])), # detection function 2
                                  #1), # for testing: if you remove probabilistic element, then mu.C better estimated
                                  # if you make detection perfect, then gamma0 and gamma1 estiamted as ~4.5 and 2
                                  # which means that plogis(4.5 + 2*0.01) and plogis(4.5 + 2*0.99) both = ~1.00 
@@ -98,14 +99,14 @@ t <- c(1e-16,0.05, # need to tweak lower categories if starting with low percent
        0.25,0.5,
        0.5,0.75,
        0.75,0.95,
-       0.95,0.9999999999999999)
+       0.95,0.99)
 t = matrix(t, nrow = 6, ncol = 2, byrow = TRUE)
 tdf <- as.data.frame(t)
 colnames(tdf) <- c('L','U') # 'L'ower and 'U'pper bounds of categories
 intervals <- c(1,2,3,4,5,6)
 tdf$int <- intervals
 # library(plyr) for SQL join function (like merge but keeps order) -- although actually could use merge with sort = F
-tInt <- c(1e-16,0.05,0.25,0.5,0.75,0.95,0.9999999999999999) # need to tweak lower categories if starting with low percentage cover like 0.01
+tInt <- c(1e-16,0.05,0.25,0.5,0.75,0.95,0.99) # need to tweak lower categories if starting with low percentage cover like 0.01
 int <- findInterval(cpos[,1], tInt) # find corresponding interval for all data points
 int <- as.data.frame(int)
 m1 <- plyr::join(int, tdf, by = "int", type = "left", match = "all") # change to using merge at some point (although merge resorts, need to add row index to resort on)
@@ -197,7 +198,7 @@ for (i in 1:N){ # N is the number of plots
     C.S[i,j] <- z[i,j] * c.Pos[i,j] # cover including zeros
     z[i,j] ~ dbern(psi[i,j]) ## true PA state of a plot within a year depends on occupancy probability psi
     psi[i,j] ~ dunif(0,1)
-    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-16,0.9999999999999999)
+    c.Pos[i,j] ~ dbeta(a.C[i,j], b.C[i,j]) T(1e-16,0.99)
     a.C[i,j] <- mu.C * tau.C
     b.C[i,j] <- (1 - mu.C) * tau.C
     } # end of years loop
@@ -216,16 +217,17 @@ for (j in 1:Y){ # number of years
 ## Plot positive covers
 for(k in 1:n.Plot.pos){ 
     cpos.Cens[k] ~ dinterval(cpos.Latent[k], lims[k,])
-    cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
+    cpos.Latent[k] ~ dbeta(a.C[plot[k], year[k]], b.C[plot[k], year[k]]) T(1e-16,0.99) # recorded cover when present follows beta distribution
 }
 
 ## Observation model for all plot visits ([within-year] detection within plots)
 for (a in 1:V2){
     x[a] ~ dbern(py[a]) # detectability influences detection
     py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
-    p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems (note that this *could* influence covars in detectability regression) -- important?
+    p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.99) # trick to stop numerical problems (note that this *could* influence covars in detectability regression) -- important?
     #logit(p.Dec[a]) <- gamma0 + gamma1 * (logit(C.S[plotZ[a], yearZ[a]]))-lmCS ##    
     #logit(p.Dec[a]) <- gamma0c + gamma1 * ((C.S[plotZ[a], yearZ[a]])-mCS) ## centering reduces gamma0c/gamma1 correlation
+    #logit(p.Dec[a]) <- gamma0 # + gamma1 * (logit(C.S[plotZ[a], yearZ[a]]))-lmCS ##       
     logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## + covars on detectability, influenced by original simulated covers (before detection)
     yOrig[a] ~ dunif(0,10) # Doesn't seem too make much difference to results
 }
@@ -235,13 +237,8 @@ for (a in 1:V2){
 mean.p ~ dbeta(1,1) # broad intercept on prob scale
 gamma0 <- logit(mean.p) # transformed # note that this requires tweak to initial values
 gamma1 ~ dunif(-5,5) # broad uniform on logit scale (but not too broad)
-#gamma1 ~ dt(0, 0.04, 1)
-#gamma1 ~ dt(0, 0.01, 1)
-#gamma0 ~ dnorm(0, 1)
-#gamma1 ~ dnorm(0, 1)
 mu.C ~ dunif(0, 1)
 tau.C ~ dt(0, 0.01, 1)T(0,)
-#tauC.T <- pow(tau.C, -0.5)
 
 } # END MODEL
 ", fill = TRUE)
@@ -259,16 +256,16 @@ para.names <- c('gamma1', 'gamma0', 'mu.C', 'tau.C', 'annOcc')
 #mean(summary(samples)$quantiles[1:300,3]) # mean occupancy (simulated psi value)
 #mean(summary(samples)$statistics[1:300,1]) # mean occupancy (simulated psi value)
 # Continue the MCMC runs with sampling
-samples_m9 <- coda.samples(jagsModel, variable.names = para.names, n.iter = 500)
+samples_g0 <- coda.samples(jagsModel, variable.names = para.names, n.iter = 300)
 #samples <- update(jagsModel, n.iter = 3000)
 ## Inspect results
 #summary(samples)
 ## Inspect results
-out <- summary(samples_m9)
+out <- summary(samples_g0)
 mu_sd <- out$stat[,1:2] #make columns for mean and sd
 q <- out$quantile[,c(3,1,5)] #make columns for median and CI
-tableOut_m9 <- as.data.frame(cbind(mu_sd,q)) #make table
-#save(tableOut_m9, samples_m9, file = "outputs/model9.Rdata")
+tableOut <- as.data.frame(cbind(mu_sd,q)) #make table
+#save(tableOut, samples_g0, file = "outputs/modelg0.Rdata")
 #tableOut[grep(rownames(tableOut), pattern = 'gamma'),]
 #tableOut[grep(rownames(tableOut), pattern = 'annOcc'),]
 #write.csv(tableOut, file = "outputs/tests/test1_CS.csv")

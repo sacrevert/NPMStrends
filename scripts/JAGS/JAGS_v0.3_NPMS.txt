@@ -34,7 +34,8 @@
       ## Can add observed cover (Domin scale) as covar to the following line
       #logit(p.Dec[a]) <- gamma0 + gamma1 * C.S[plotZ[a], yearZ[a]] ## C.S is estimated zero-inflated cover
       #logit(p.Dec[a]) <- -2 + 3 * C.S[plotZ[a], yearZ[a]] ## C.S is estimated zero-inflated cover
-      logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA')
+      #logit(p.Dec[a]) <- gamma0 + gamma1 * yOrig[a] ## yOrig is reported Domin value (which can be unknown, i.e. 'NA') # used for grasslands_16012019 (inc NAs) and grasslands_26032019 (exc NAs)
+      logit(p.Dec[a]) <- gamma0 # used for grasslands_26032019_v2
       #yOrig[a] ~ dt(0, 0.01, 1)T(0,) # Prior necessary to account for missing data (not sure this is the best distrbution though)
       yOrig[a] ~ dunif(0,10) # Doesn't seem to make much difference to results
     }

@@ -27,8 +27,8 @@ source(file = "scripts/3_processDataFuns.R")
 ##
 
 ## Following can be used if database extraction not run
-#load(file = "data/npms1518_SamplesSpecies_2019-01-10.Rdata")
-#load(file = "data/npms1518_PlotsSamples_2019-01-10.Rdata")
+load(file = "data/npms1518_SamplesSpecies_2019-01-10.Rdata")
+load(file = "data/npms1518_PlotsSamples_2019-01-10.Rdata")
 
 ##############################################################
 ############ Generalised approach using functions ############
@@ -54,7 +54,8 @@ names(sppDatList) <- focalSpp
 ## Species with no data for reference
 excludedSpp <- unlist(lapply(seq_along(sppDatList), function(i) ifelse(which(!is.data.frame(sppDatList[[i]]))==1, names(sppDatList)[i], NULL)))
 ##
-
+save(sppDatList, excludedSpp, file = "outputs/grasslandsEg_26 03 2019.Rdata")
+#load(file = "outputs/grasslandsEg_26 03 2019.Rdata")
 #####
 # The next step is to run the model over each species data frame
 # (i.e. run script 5_processData..., but over multiple species, and collecting useful results)

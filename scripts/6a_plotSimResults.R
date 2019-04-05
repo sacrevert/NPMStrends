@@ -7,7 +7,10 @@
 library(ggplot2)
 library(gridExtra)
 
+load(file="outputs/modelPD.Rdata")
+load(file="outputs/model0.Rdata")
 load(file="outputs/model1.Rdata")
+#load(file="outputs/model1a.Rdata") # model 1a same as model 1 but with change from 0.9999999999 -> 0.99 (in simulation and JAGS code -- makes no difference)
 load(file="outputs/model2.Rdata")
 load(file="outputs/model3.Rdata")
 load(file="outputs/model4.Rdata")
@@ -21,17 +24,35 @@ load(file="outputs/model9.Rdata")
 ### Models 1 to 3
 #################
 # harmonise
-tableOut_m1 <- tableOut_m1[c(1,11:14),]
-tableOut_m2 <- tableOut_m2[c(1,6,8:10),]
-tableOut_m3 <- tableOut_m3[c(1,5,7:9),]
+tableOut <- tableOut[c(1:5),] # perfect detection
+tableOut_m0 <- tableOut_m0[c(1:5),]
+tableOut_m1 <- tableOut_m1[c(1:5),]
+#tableOut_m1a <- tableOut_m1a[c(1,11:14),]
+tableOut_m2 <- tableOut_m2[c(1:5),]
+tableOut_m3 <- tableOut_m3[c(1:5),]
 
 
 # Put model estimates into temporary data.frames:
+modelmFrame <- data.frame(Variable = rownames(tableOut),
+                          Median = tableOut$`50%`,
+                          lCI = tableOut$`2.5%`,
+                          uCI = tableOut$`97.5%`,
+                          modelName = "Perfect detection")
+model0Frame <- data.frame(Variable = rownames(tableOut_m0),
+                          Median = tableOut_m0$`50%`,
+                          lCI = tableOut_m0$`2.5%`,
+                          uCI = tableOut_m0$`97.5%`,
+                          modelName = "Model 0")
 model1Frame <- data.frame(Variable = rownames(tableOut_m1),
                           Median = tableOut_m1$`50%`,
                           lCI = tableOut_m1$`2.5%`,
                           uCI = tableOut_m1$`97.5%`,
                           modelName = "Model 1")
+#model1aFrame <- data.frame(Variable = rownames(tableOut_m1a),
+#                          Median = tableOut_m1a$`50%`,
+#                          lCI = tableOut_m1a$`2.5%`,
+#                          uCI = tableOut_m1a$`97.5%`,
+#                          modelName = "Model 1a")
 model2Frame <- data.frame(Variable = rownames(tableOut_m2),
                           Median = tableOut_m2$`50%`,
                           lCI = tableOut_m2$`2.5%`,
@@ -43,7 +64,10 @@ model3Frame <- data.frame(Variable = rownames(tableOut_m3),
                           uCI = tableOut_m3$`97.5%`,
                           modelName = "Model 3")
 # Combine these data.frames
-allModelFrame <- data.frame(rbind(model1Frame, model2Frame, model3Frame))  # etc.
+allModelFrame <- data.frame(rbind(modelmFrame, model0Frame, model1Frame, model2Frame, model3Frame))  # etc.
+#levels(allModelFrame$modelName) <- c("Model 3", "Model 2", "Model 1", "Model 0")
+allModelFrame <- allModelFrame[order(allModelFrame$modelName, decreasing = T),]
+allModelFrame[c(22:23),c(2:4)] <- NA# remove gamma0 and gamma1 rows for perfect detection model
 
 # Plot
 p <- ggplot(allModelFrame, aes(colour = modelName)) + 
@@ -52,9 +76,9 @@ p <- ggplot(allModelFrame, aes(colour = modelName)) +
                               lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
   theme(legend.key.size = unit(2,"cm")) +
   coord_flip() # export 558 x 509
-
+p
 ### Improve display using gridExtra
-p1 <- ggplot(allModelFrame[allModelFrame$Variable=="annOcc[1]",], aes(colour = modelName)) + 
+p1 <- ggplot(allModelFrame[allModelFrame$Variable=="avgOcc",], aes(colour = modelName)) + 
   geom_hline(yintercept=1, lty=2, lwd=1) +
   geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
                   lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
@@ -101,9 +125,9 @@ gridExtra::grid.arrange(p1,p2,p3,p4,p5, nrow = 2, ncol = 3)
 ### Models 4 to 6
 #################
 # harmonise
-tableOut_m4 <- tableOut_m4[c(1,6:9),]
-tableOut_m5 <- tableOut_m5[c(1,6:9),]
-tableOut_m6 <- tableOut_m6[c(1,6:9),]
+tableOut_m4 <- tableOut_m4[c(1:5),]
+tableOut_m5 <- tableOut_m5[c(1:5),]
+tableOut_m6 <- tableOut_m6[c(1:5),]
 
 
 # Put model estimates into temporary data.frames:
@@ -132,10 +156,10 @@ p456 <- ggplot(allModelFrame456, aes(colour = modelName)) +
                   lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
   theme(legend.key.size = unit(2,"cm")) +
   coord_flip() # export 558 x 509
-
+p456
 ### Improve display using gridExtra
-p6 <- ggplot(allModelFrame456[allModelFrame456$Variable=="annOcc[1]",], aes(colour = modelName)) + 
-  geom_hline(yintercept=c(0.75,0.5,0.25), lty=2, lwd=1) +
+p6 <- ggplot(allModelFrame456[allModelFrame456$Variable=="avgOcc",], aes(colour = modelName)) + 
+  geom_hline(yintercept=c(0.75,0.5,0.25), lty=2, lwd=1, color = c("#F8766D","#00BA38" ,"#619CFF")) +
   geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
                   lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
   theme(legend.position = "none") +
@@ -181,9 +205,9 @@ gridExtra::grid.arrange(p6,p7,p8,p9,p10, nrow = 2, ncol = 3)
 ### Models 7 to 9
 #################
 # harmonise
-tableOut_m7 <- tableOut_m7[c(1,6:9),]
-tableOut_m8 <- tableOut_m8[c(1,6:9),]
-tableOut_m9 <- tableOut_m9[c(1,6:9),]
+tableOut_m7 <- tableOut_m7[c(1:5),]
+tableOut_m8 <- tableOut_m8[c(1:5),]
+tableOut_m9 <- tableOut_m9[c(1:5),]
 
 
 # Put model estimates into temporary data.frames:
@@ -204,7 +228,7 @@ model9Frame <- data.frame(Variable = rownames(tableOut_m9),
                           modelName = "Model 9")
 # Combine these data.frames
 allModelFrame789 <- data.frame(rbind(model7Frame, model8Frame, model9Frame))  # etc.
-allModelFrame789$uCI[which(allModelFrame789$uCI>25)] <-25 # hard limit for plotting (not advisable!)
+#allModelFrame789$uCI[which(allModelFrame789$uCI>25)] <-25 # hard limit for plotting (not advisable!)
 
 # Plot
 p789 <- ggplot(allModelFrame789, aes(colour = modelName)) + 
@@ -214,8 +238,8 @@ p789 <- ggplot(allModelFrame789, aes(colour = modelName)) +
   scale_y_continuous(limits = c(-5, 25)) +
   theme(legend.key.size = unit(2,"cm")) +
   coord_flip() # export 558 x 509
-
-p11 <- ggplot(allModelFrame789[allModelFrame789$Variable=="annOcc[1]",], aes(colour = modelName)) + 
+p789
+p11 <- ggplot(allModelFrame789[allModelFrame789$Variable=="avgOcc",], aes(colour = modelName)) + 
   geom_hline(yintercept=c(0.25), lty=2, lwd=1) +
   geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
                   lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
@@ -240,7 +264,7 @@ p13 <- ggplot(allModelFrame789[allModelFrame789$Variable=="gamma1",], aes(colour
   theme(axis.title.y=element_blank() ) +
   coord_flip() # export 558 x 509
 p14 <- ggplot(allModelFrame789[allModelFrame789$Variable=="mu.C",], aes(colour = modelName)) + 
-  geom_hline(yintercept=c(0.025,0.25,0.5), lty=2, lwd=1) +
+  geom_hline(yintercept=c(0.025,0.10,0.25), lty=2, lwd=1, color = c("#619CFF","#00BA38" ,"#F8766D")) +
   geom_pointrange(aes(x = Variable,y = Median,  ymin = lCI, ymax = uCI),
                   lwd = 2, position = position_dodge(width = 1/2),shape = 21, fill = "WHITE", fatten = 1) +
   theme(legend.position = "none") +
@@ -257,3 +281,11 @@ p15 <- ggplot(allModelFrame789[allModelFrame789$Variable=="tau.C",], aes(colour 
   theme(axis.title.y=element_blank() ) +
   coord_flip() # export 558 x 509
 gridExtra::grid.arrange(p11,p12,p13,p14,p15, nrow = 2, ncol = 3)
+
+## Get colours
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+gg_color_hue(3)
