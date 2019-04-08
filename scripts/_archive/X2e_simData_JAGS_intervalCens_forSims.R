@@ -2,6 +2,7 @@
 # Now with interval censoring! (2c)
 # Version 2d -- used for sims
 # Version 2e -- fixed error in occupancy simulation and summary,and change to using y > yOrig in detection model (yOrig not available in real world)
+# Version 2f -- simplified notation as per Freeman comments
 #
 # note that this model only uses an observation/detection model for the repeat visits within a year, not for the cover data
 # whilst it is reasonable to assume that the occupancy state is stable within years (obviously this is not 100% true all the time, but is reasonable)

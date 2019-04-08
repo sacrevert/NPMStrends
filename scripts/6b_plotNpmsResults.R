@@ -20,8 +20,9 @@ muAll <- do.call(rbind, lapply(lapply(sppModels, '[[', 2), function(x) as.data.f
 muAll$species <- rownames(muAll)
 muAll <- muAll[order(muAll$`50%`, decreasing = T),]
 muAll$species <- factor(muAll$species, levels = c(muAll$species))
+muAll$plot <- rep(seq(1,2), 43)
 
-ggplot(muAll[c(1:43),], aes(species, `50%`)) + 
+ggplot(muAll[muAll$plot==1,], aes(species, `50%`)) + 
   #geom_hline(yintercept=0, lty=2, lwd=1, colour="grey50") +
   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
                 lwd=1.5, colour="grey", width=0) +
@@ -51,10 +52,15 @@ ggplot(muAll[c(44:86),], aes(species, `50%`)) +
 aoAll1 <- do.call(rbind, lapply(lapply(sppModels, '[[', 2), function(x) as.data.frame(x[rownames(x) %in% c("annOcc[1]"),])))
 aoAll1$species <- rownames(aoAll1)
 aoAll1$year <- 1
-ggplot(aoAll1[c(1:43),], aes(species, `50%`)) + 
+aoAll1 <- aoAll1[order(aoAll1$`50%`, decreasing = T),]
+aoAll1$species <- factor(aoAll1$species, levels = c(aoAll1$species))
+aoAll1$plot <- rep(seq(1,2), 43)
+
+
+ggplot(aoAll1[aoAll1$plot==1,], aes(species, `50%`)) + 
   #geom_hline(yintercept=0, lty=2, lwd=1, colour="grey50") +
   geom_errorbar(aes(ymin = `2.5%`, ymax = `97.5%`), 
-                lwd=1.5, colour="grey", width=0) +
+                lwd=1.5, colour="red", width=0) +
   #geom_errorbar(aes(ymin = quant0.25, ymax = quant0.75), 
   #              lwd=2.5, colour="gray0", width=0) +
   scale_y_continuous(limits=c(0.4,0.65)) +

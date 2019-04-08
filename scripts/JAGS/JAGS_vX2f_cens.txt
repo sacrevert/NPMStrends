@@ -1,0 +1,55 @@
+
+model{
+## State model
+for (i in 1:N){ # N is the number of plots
+  for (j in 1:Y){ # number of years
+    C[i,j] <- z[i,j] * cPos[i,j] # cover including zeros
+    z[i,j] ~ dbern(psi[i,j]) # true PA state of a plot within a year depends on occupancy probability psi
+    psi[i,j] ~ dunif(0,1)
+    cPos[i,j] ~ dbeta(a[i,j], b[i,j]) T(1e-16,0.9999999999999999)
+    a[i,j] <- mu * tau
+    b[i,j] <- (1 - mu) * tau
+    } # end of years loop
+} # end of plot loop
+
+
+## Derived values from state model
+for (j in 1:Y){ # number of years
+    annOcc[j] <- (sum(z[,j]))/N # annual occupancy
+}
+avgOcc <- mean(annOcc[]) # average annual occupancy
+
+## Plot positive covers
+for(k in 1:n.Plot.pos){ 
+    cposCens[k] ~ dinterval(cposLatent[k], lims[k,])
+    cposLatent[k] ~ dbeta(a[plot[k], year[k]], b[plot[k], year[k]]) T(1e-16,0.9999999999999999) # recorded cover when present follows beta distribution
+}
+
+## Observation model for all plot visits ([within-year] detection within plots)
+mY <- mean(y[]) # mean detected cover across all years for mean-centring
+for (a in 1:V2){
+    x[a] ~ dbern(py[a]) # detectability influences detection
+    py[a] <- z[plotZ[a], yearZ[a]] * p.dec[a] # true state x detectability
+    p.dec[a] <- min(max(1e-16, p.Dec[a]), 0.9999999999999999) # trick to stop numerical problems
+    logit(p.Dec[a]) <- gamma0c + gamma1 * (y[a] - mY) # centering reduces gamma0c/gamma1 correlation
+    #logit(p.Dec[a]) <- gamma0 + gamma1 * y[a]
+    #logit(p.Dec[a]) <- gamma0 # without dependency of detection on abundance (requires changes to L236 and prior as well)
+}
+# only required if you are including detected cover in estimate of detectability
+gamma0 <- gamma0c - gamma1 * mY # Recover original intercept
+
+## Priors!
+#for (j in 1:Y){
+#mean.p[j] ~ dbeta(2,0.5) # regularising prior with emphasis on detection being high
+#gamma0[j] <- logit(mean.p[j])
+#}
+mean.p ~ dbeta(1,1) # broad intercept on prob scale
+gamma0c <- logit(mean.p) # transformed # note that this requires tweak to initial values
+#gamma0 <- logit(mean.p) # transformed # note that this requires tweak to initial values
+#gamma1 ~ dunif(-20,20) # broad uniform on logit scale
+gamma1 ~ dnorm(0, 1) #tau = 1 # waekly informative prior to help with quasi-complete separation in logistic regression
+mu ~ dunif(0, 1)
+tau ~ dt(0, 0.01, 1)T(0,)
+
+} ## END MODEL
+
