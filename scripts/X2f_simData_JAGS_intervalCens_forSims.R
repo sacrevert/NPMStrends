@@ -252,7 +252,7 @@ tableOut_m9
 #write.csv(tableOut, file = "outputs/tests/test1_CS.csv")
 
 plot(samples)
-gelman.diag(samples)
+gelman.diag(samples9)
 ## Using mcmcplots::mcmcplot
 mcmcplot(samples, random = 5)
 caterplot(samples, style = "plain")

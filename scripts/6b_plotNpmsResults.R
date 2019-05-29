@@ -29,7 +29,7 @@ ggplot(muAll[muAll$plot==1,], aes(species, `50%`)) +
   #geom_errorbar(aes(ymin = quant0.25, ymax = quant0.75), 
   #              lwd=2.5, colour="gray0", width=0) +
   geom_point(size=2.0, pch=21, fill="white") +
-  labs(y = "mu.C cover estimates") +
+  labs(y = "Mean cover estimates, with 95% Credible Intervals") +
   theme_bw() +
   theme(axis.title.y=element_blank() ) +
   coord_flip() # export 1145 x 973
@@ -65,7 +65,7 @@ ggplot(aoAll1[aoAll1$plot==1,], aes(species, `50%`)) +
   #              lwd=2.5, colour="gray0", width=0) +
   scale_y_continuous(limits=c(0.4,0.65)) +
   geom_point(size=2.0, pch=21, fill="white") +
-  labs(y = "Occupancy estimate: year 1") +
+  labs(y = "Mean plot occupancy estimate (2015), with 95% Credible Interval") +
   theme_bw() +
   theme(axis.title.y=element_blank() ) +
   coord_flip() # export 1145 x 973
